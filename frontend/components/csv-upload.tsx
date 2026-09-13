@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import type { TrainingOverview } from "@/components/overview-grid";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -37,6 +38,7 @@ interface UploadStatistics {
 interface UploadResult {
   statistics: UploadStatistics;
   workouts: unknown[];
+  overview: TrainingOverview | null;
 }
 
 type UploadState =
@@ -58,7 +60,11 @@ function statEntries(stats: UploadStatistics): [string, string | number][] {
   ];
 }
 
-export function CsvUpload() {
+export function CsvUpload({
+  onOverview,
+}: {
+  onOverview?: (overview: TrainingOverview | null) => void;
+}) {
   const [file, setFile] = useState<File | null>(null);
   const [state, setState] = useState<UploadState>({ status: "idle" });
 
@@ -75,6 +81,7 @@ export function CsvUpload() {
       const body = (await res.json().catch(() => null)) as {
         detail?: string | { message?: string };
         statistics?: UploadStatistics;
+        overview?: TrainingOverview | null;
       } | null;
       if (!res.ok) {
         const message =
@@ -93,6 +100,7 @@ export function CsvUpload() {
         result: body as UploadResult,
         fileName: file.name,
       });
+      onOverview?.((body as UploadResult).overview ?? null);
     } catch (err) {
       setState({
         status: "error",

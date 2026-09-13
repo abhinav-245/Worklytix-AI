@@ -1,5 +1,5 @@
 import { BackendStatus } from "@/components/backend-status";
-import { CsvUpload } from "@/components/csv-upload";
+import { WorkoutFlow } from "@/components/workout-flow";
 
 export default function Home() {
   return (
@@ -11,7 +11,7 @@ export default function Home() {
         Fitness-data analysis application.
       </p>
       <BackendStatus />
-      <CsvUpload />
+      <WorkoutFlow />
     </main>
   );
 }

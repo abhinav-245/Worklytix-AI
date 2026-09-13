@@ -1,7 +1,9 @@
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
-from data.models import UploadResponse
+from analytics.overview import TrainingOverview, compute_overview
+from data.models import UploadResponse, WorkoutRecord
 from data.parser import CSVPipelineError, MissingColumnsError
 from data.pipeline import process_csv_bytes
 
@@ -28,7 +30,19 @@ def health():
     return {"status": "ok"}
 
 
-@app.post("/upload", response_model=UploadResponse)
+class UploadWithOverview(UploadResponse):
+    """Phase 2 upload response plus Phase 3 overview facts (no extra parsing)."""
+
+    overview: TrainingOverview | None = None
+
+
+# In-memory V1 state: normalized workouts from the most recent upload.
+# No database by design; per-process memory (a multi-worker deployment would
+# need shared state later). Reset on restart; 404 until the first upload.
+_LAST_WORKOUTS: list[WorkoutRecord] | None = None
+
+
+@app.post("/upload", response_model=UploadWithOverview)
 async def upload(file: UploadFile = File(...)):
     """Accept a workout CSV (multipart form data) and run the Phase 2 pipeline.
 
@@ -46,7 +60,7 @@ async def upload(file: UploadFile = File(...)):
 
     data = await file.read()
     try:
-        return process_csv_bytes(data)
+        result = process_csv_bytes(data)
     except MissingColumnsError as exc:
         raise HTTPException(
             status_code=400,
@@ -69,3 +83,25 @@ async def upload(file: UploadFile = File(...)):
                 "message": "The CSV could not be processed due to a server error.",
             },
         ) from exc
+
+    global _LAST_WORKOUTS
+    _LAST_WORKOUTS = result.workouts
+    overview = compute_overview(result.workouts)
+    return UploadWithOverview(
+        statistics=result.statistics, workouts=result.workouts, overview=overview
+    )
+
+
+@app.get("/analysis/overview", response_model=TrainingOverview)
+def analysis_overview():
+    """Overview facts for the most recently uploaded dataset (in-memory)."""
+    if _LAST_WORKOUTS is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "no_dataset",
+                "message": "No workout dataset has been uploaded yet. "
+                "POST a CSV to /upload first.",
+            },
+        )
+    return compute_overview(_LAST_WORKOUTS)

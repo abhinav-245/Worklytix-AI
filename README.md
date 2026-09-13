@@ -6,7 +6,7 @@ LLM to interpret those calculated results.
 
 ## Current Phase
 
-Phase 2 — CSV Pipeline
+Phase 3 — Training Overview Analytics
 
 ## Technology
 
@@ -38,11 +38,11 @@ FIT-INTEL/
 │   └── .env.example
 ├── backend/         # FastAPI
 │   ├── .venv/
-│   ├── main.py        # GET /health, POST /upload
+│   ├── main.py        # GET /health, POST /upload, GET /analysis/overview
 │   ├── requirements.txt
 │   ├── data/          # CSV pipeline: parser, cleaner, normalizer, models
+│   ├── analytics/     # overview analytics (consumes normalized model only)
 │   ├── tests/         # unittest suite + Hevy CSV fixture
-│   ├── analytics/     # (future phases)
 │   ├── ai/            # (future phases)
 │   └── mappings/      # (future phases)
 ├── README.md
@@ -153,15 +153,19 @@ python -m unittest discover -s tests -v
 
 - `GET /health` → `{ "status": "ok" }`
 - `POST /upload` (multipart form data, field `file`, `.csv` only) →
-  `{ "statistics": {...}, "workouts": [...] }` with the normalized
-  Workout → Exercise → Set hierarchy and dataset statistics
+  `{ "statistics": {...}, "workouts": [...], "overview": {...} }` with the
+  normalized Workout → Exercise → Set hierarchy, dataset statistics
   (`total_rows`, `valid_rows`, `invalid_rows`, `total_workouts`,
   `total_exercises`, `total_sets`, first/last workout dates,
-  `missing_values`, `invalid_values`). Invalid files return HTTP 400
-  with a JSON error; server failures return HTTP 500 without tracebacks.
+  `missing_values`, `invalid_values`), and the training-overview facts.
+  Invalid files return HTTP 400 with a JSON error; server failures return
+  HTTP 500 without tracebacks.
+- `GET /analysis/overview` → training-overview facts for the most recently
+  uploaded dataset (in-memory; HTTP 404 `no_dataset` before the first upload).
 
 ## Notes
 
-- Phase 2 prepares normalized data only: no analytics, AI, recommendations,
-  charts, database, or auth yet. Uploads are processed in memory.
-- Git setup is intentionally not part of this phase and is handled separately.
+- Uploads are processed in memory; no database. Overview metrics are
+  deterministic Python calculations over the normalized model — no LLM,
+  no frontend calculations, no charts yet. PRs, volume, progression,
+  plateaus, muscles, AI, and recommendations belong to later phases.
