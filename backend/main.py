@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from analytics.overview import TrainingOverview, compute_overview
+from analytics.prs import ExercisePR, generate_exercise_prs
 from data.models import UploadResponse, WorkoutRecord
 from data.parser import CSVPipelineError, MissingColumnsError
 from data.pipeline import process_csv_bytes
@@ -105,3 +106,18 @@ def analysis_overview():
             },
         )
     return compute_overview(_LAST_WORKOUTS)
+
+
+@app.get("/analysis/prs", response_model=list[ExercisePR])
+def analysis_prs():
+    """Per-exercise PR facts for the most recently uploaded dataset."""
+    if _LAST_WORKOUTS is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "no_dataset",
+                "message": "No workout dataset has been uploaded yet. "
+                "POST a CSV to /upload first.",
+            },
+        )
+    return generate_exercise_prs(_LAST_WORKOUTS)

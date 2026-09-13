@@ -6,7 +6,7 @@ LLM to interpret those calculated results.
 
 ## Current Phase
 
-Phase 3 — Training Overview Analytics
+Phase 4 — PR Engine
 
 ## Technology
 
@@ -38,10 +38,10 @@ FIT-INTEL/
 │   └── .env.example
 ├── backend/         # FastAPI
 │   ├── .venv/
-│   ├── main.py        # GET /health, POST /upload, GET /analysis/overview
+│   ├── main.py        # /health, /upload, /analysis/overview, /analysis/prs
 │   ├── requirements.txt
 │   ├── data/          # CSV pipeline: parser, cleaner, normalizer, models
-│   ├── analytics/     # overview analytics (consumes normalized model only)
+│   ├── analytics/     # overview + PR engine (normalized model only)
 │   ├── tests/         # unittest suite + Hevy CSV fixture
 │   ├── ai/            # (future phases)
 │   └── mappings/      # (future phases)
@@ -162,10 +162,28 @@ python -m unittest discover -s tests -v
   HTTP 500 without tracebacks.
 - `GET /analysis/overview` → training-overview facts for the most recently
   uploaded dataset (in-memory; HTTP 404 `no_dataset` before the first upload).
+- `GET /analysis/prs` → per-exercise PR facts for the most recently uploaded
+  dataset (in-memory; HTTP 404 `no_dataset` before the first upload).
+  Each entry: `exercise_name`, `weight_pr`, `rep_pr`, `volume_pr`,
+  `estimated_1rm_pr` (each with `value`, `unit`, `date`, and — for volume/1RM
+  — the `weight`/`reps` of the winning set; `null` when the exercise has no
+  eligible sets).
+
+## PR engine
+
+- Weight PR: heaviest eligible `weight_kg` (kg, 2 dp).
+- Rep PR: highest eligible `reps` (int).
+- Volume PR: highest single-set `weight_kg × reps` (kg, 2 dp).
+- Estimated 1RM: Epley formula `weight × (1 + reps / 30)` (kg, 2 dp);
+  Estimated 1RM PR is its maximum — the heaviest set does not always win.
+- Eligibility: any set with valid positive weight and positive integer reps,
+  regardless of `set_type`. Missing/invalid/zero/negative values are never
+  zero-filled or inferred; such sets are ineligible. Ties resolve to the
+  earliest occurrence.
 
 ## Notes
 
-- Uploads are processed in memory; no database. Overview metrics are
+- Uploads are processed in memory; no database. Overview and PR metrics are
   deterministic Python calculations over the normalized model — no LLM,
-  no frontend calculations, no charts yet. PRs, volume, progression,
+  no frontend calculations, no charts yet. Volume analytics, progression,
   plateaus, muscles, AI, and recommendations belong to later phases.
