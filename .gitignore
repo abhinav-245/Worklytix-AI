@@ -1,0 +1,50 @@
+# Node
+node_modules/
+frontend/node_modules/
+
+# Next.js
+.next/
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# Python
+.venv/
+backend/.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Env files
+.env
+.env.local
+.env.*.local
+frontend/.env.local
+
+# Keep example env files
+!.env.example
+!frontend/.env.example
+
+# Build / dist
+dist/
+build/
+
+# IDE / editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+backend/tests/fixtures/workout_data.csv
