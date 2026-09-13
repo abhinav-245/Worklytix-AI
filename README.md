@@ -6,7 +6,7 @@ LLM to interpret those calculated results.
 
 ## Current Phase
 
-Phase 4 — PR Engine
+Phase 5 — Progression Analysis
 
 ## Technology
 
@@ -41,7 +41,7 @@ FIT-INTEL/
 │   ├── main.py        # /health, /upload, /analysis/overview, /analysis/prs
 │   ├── requirements.txt
 │   ├── data/          # CSV pipeline: parser, cleaner, normalizer, models
-│   ├── analytics/     # overview + PR engine (normalized model only)
+│   ├── analytics/     # overview + PRs + progression (normalized model only)
 │   ├── tests/         # unittest suite + Hevy CSV fixture
 │   ├── ai/            # (future phases)
 │   └── mappings/      # (future phases)
@@ -168,6 +168,24 @@ python -m unittest discover -s tests -v
   `estimated_1rm_pr` (each with `value`, `unit`, `date`, and — for volume/1RM
   — the `weight`/`reps` of the winning set; `null` when the exercise has no
   eligible sets).
+- `GET /analysis/progression` → chronological per-exercise progression
+  histories (`{ exercises: [{ exercise_name, history: [...] }] }`, sorted by
+  exercise name; each point has `date`, `workout_start`, `weight_kg`, `reps`,
+  `volume_kg`, `estimated_1rm_kg`). Optional `?exercise_name=...` filter
+  (exact match; 404 `unknown_exercise` when absent). 404 `no_dataset` before
+  the first upload. The frontend renders weight/rep/volume/estimated-1RM
+  line charts per selected exercise.
+
+## Progression analysis
+
+- One point per exercise occurrence within a workout (same-day sessions stay
+  separate; ordered oldest → newest by workout start time).
+- Per point: max weight, max reps, **total** exercise volume
+  (`Σ weight × reps` — deliberately different from the Phase 4 single-set
+  volume PR), max Epley estimated 1RM (2 dp).
+- Same Phase 4 validity rule (positive weight + positive integer reps, any
+  `set_type`); invalid sets excluded, never zero-filled; exercises without
+  eligible sets get an empty history.
 
 ## PR engine
 
@@ -183,7 +201,7 @@ python -m unittest discover -s tests -v
 
 ## Notes
 
-- Uploads are processed in memory; no database. Overview and PR metrics are
-  deterministic Python calculations over the normalized model — no LLM,
-  no frontend calculations, no charts yet. Volume analytics, progression,
-  plateaus, muscles, AI, and recommendations belong to later phases.
+- Uploads are processed in memory; no database. Overview, PR, and progression
+  metrics are deterministic Python calculations over the normalized model —
+  no LLM, no frontend calculations. Volume analytics, plateaus, muscles, AI,
+  and recommendations belong to later phases.

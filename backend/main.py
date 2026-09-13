@@ -4,6 +4,11 @@ from pydantic import BaseModel
 
 from analytics.overview import TrainingOverview, compute_overview
 from analytics.prs import ExercisePR, generate_exercise_prs
+from analytics.progression import (
+    ProgressionResponse,
+    compute_exercise_progression,
+    compute_progression,
+)
 from data.models import UploadResponse, WorkoutRecord
 from data.parser import CSVPipelineError, MissingColumnsError
 from data.pipeline import process_csv_bytes
@@ -121,3 +126,42 @@ def analysis_prs():
             },
         )
     return generate_exercise_prs(_LAST_WORKOUTS)
+
+
+def _require_dataset() -> list[WorkoutRecord]:
+    """Return the in-memory uploaded dataset or raise the 404 used by analysis."""
+    if _LAST_WORKOUTS is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "no_dataset",
+                "message": "No workout dataset has been uploaded yet. "
+                "POST a CSV to /upload first.",
+            },
+        )
+    return _LAST_WORKOUTS
+
+
+@app.get("/analysis/progression", response_model=ProgressionResponse)
+def analysis_progression(
+    exercise_name: str | None = None,
+) -> ProgressionResponse:
+    """Chronological per-exercise progression for the uploaded dataset.
+
+    Optionally filter to one normalized exercise with
+    ``?exercise_name=...`` (exact match; 404 when unknown).
+    """
+    workouts = _require_dataset()
+    if exercise_name is not None:
+        single = compute_exercise_progression(workouts, exercise_name)
+        if single is None:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error": "unknown_exercise",
+                    "message": f"No exercise named {exercise_name!r} "
+                    "in the uploaded dataset.",
+                },
+            )
+        return ProgressionResponse(exercises=[single])
+    return compute_progression(workouts)

@@ -92,8 +92,12 @@ def calculate_estimated_1rm(weight_kg: float, reps: int) -> float:
     return round(weight_kg * (1 + reps / 30), 2)
 
 
-def _is_eligible(weight: object, reps: object) -> bool:
-    """Eligibility: positive weight and positive integer reps (any set_type)."""
+def is_eligible_set(weight: object, reps: object) -> bool:
+    """Eligibility (shared V1 rule, also used by progression analytics).
+
+    Positive weight and positive integer reps, regardless of set_type.
+    Missing/invalid/zero/negative values are never converted or inferred.
+    """
     if isinstance(weight, bool) or isinstance(reps, bool):
         return False
     if not isinstance(weight, (int, float)) or not isinstance(reps, (int, float)):
@@ -133,7 +137,7 @@ def _collect_candidates(
             if not name or not name.strip():
                 continue
             for s in exercise.sets:
-                if not _is_eligible(s.weight_kg, s.reps):
+                if not is_eligible_set(s.weight_kg, s.reps):
                     continue
                 weight = float(s.weight_kg)  # type: ignore[arg-type]
                 reps = int(s.reps)  # type: ignore[arg-type]

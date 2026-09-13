@@ -7,6 +7,10 @@ import {
   type TrainingOverview,
 } from "@/components/overview-grid";
 import { PrTable, type ExercisePR } from "@/components/pr-table";
+import {
+  ProgressionSection,
+  type ExerciseProgression,
+} from "@/components/progression-charts";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -34,13 +38,29 @@ async function fetchPrs(): Promise<ExercisePR[] | null> {
   }
 }
 
+async function fetchProgression(): Promise<ExerciseProgression[] | null> {
+  try {
+    const res = await fetch(`${API_URL}/analysis/progression`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { exercises: ExerciseProgression[] };
+    return body.exercises;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Upload → overview + PRs flow. All numbers are calculated by the backend;
- * this component only displays them.
+ * Upload → overview + PRs + progression flow. All numbers are calculated
+ * by the backend; this component only displays them.
  */
 export function WorkoutFlow() {
   const [overview, setOverview] = useState<TrainingOverview | null>(null);
   const [prs, setPrs] = useState<ExercisePR[] | null>(null);
+  const [progression, setProgression] = useState<ExerciseProgression[] | null>(
+    null
+  );
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -61,6 +81,18 @@ export function WorkoutFlow() {
     fetchPrs().then((data) => {
       if (!active) return;
       setPrs(data);
+    });
+    return () => {
+      active = false;
+    };
+  }, [overview]);
+
+  useEffect(() => {
+    if (!overview) return;
+    let active = true;
+    fetchProgression().then((data) => {
+      if (!active) return;
+      setProgression(data);
     });
     return () => {
       active = false;
@@ -88,6 +120,14 @@ export function WorkoutFlow() {
             Personal Records
           </h2>
           <PrTable prs={prs} />
+        </section>
+      ) : null}
+      {progression ? (
+        <section className="flex w-full flex-col items-center gap-4">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Progression
+          </h2>
+          <ProgressionSection exercises={progression} />
         </section>
       ) : null}
     </>
