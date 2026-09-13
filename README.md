@@ -6,7 +6,7 @@ LLM to interpret those calculated results.
 
 ## Current Phase
 
-Phase 5 — Progression Analysis
+Phase 6 — Plateau Detection
 
 ## Technology
 
@@ -38,10 +38,10 @@ FIT-INTEL/
 │   └── .env.example
 ├── backend/         # FastAPI
 │   ├── .venv/
-│   ├── main.py        # /health, /upload, /analysis/overview, /analysis/prs
+│   ├── main.py        # /health, /upload, /analysis/* endpoints
 │   ├── requirements.txt
 │   ├── data/          # CSV pipeline: parser, cleaner, normalizer, models
-│   ├── analytics/     # overview + PRs + progression (normalized model only)
+│   ├── analytics/     # overview + PRs + progression + plateaus (normalized model only)
 │   ├── tests/         # unittest suite + Hevy CSV fixture
 │   ├── ai/            # (future phases)
 │   └── mappings/      # (future phases)
@@ -175,6 +175,22 @@ python -m unittest discover -s tests -v
   (exact match; 404 `unknown_exercise` when absent). 404 `no_dataset` before
   the first upload. The frontend renders weight/rep/volume/estimated-1RM
   line charts per selected exercise.
+- `GET /analysis/plateaus` → possible-plateau periods
+  (`{ plateaus: [...] }`, sorted by exercise name then start; each with
+  `label: "Possible Plateau"`, `plateau_start/end`, `duration_days`,
+  `consecutive_weeks`, `heaviest_weight_kg`, `reps_at_heaviest_weight`,
+  and per-week `evidence`). Optional `?exercise_name=...` filter.
+  404 `no_dataset` before the first upload.
+
+## Plateau detection
+
+- An exercise occurrence is reduced to (heaviest valid weight, max reps at
+  that weight); each ISO week (Monday–Sunday) takes its best weekly
+  signature. The same signature across **4+ consecutive performance weeks**
+  (a missing week breaks the run) yields one `Possible Plateau` record with
+  `consecutive_weeks`, observed `plateau_start/end` dates, `duration_days`,
+  and per-week evidence. Longer runs extend one record; separate runs stay
+  separate. Same Phase 4 validity rule, any `set_type`; no AI, no advice.
 
 ## Progression analysis
 
@@ -201,7 +217,7 @@ python -m unittest discover -s tests -v
 
 ## Notes
 
-- Uploads are processed in memory; no database. Overview, PR, and progression
-  metrics are deterministic Python calculations over the normalized model —
-  no LLM, no frontend calculations. Volume analytics, plateaus, muscles, AI,
-  and recommendations belong to later phases.
+- Uploads are processed in memory; no database. Overview, PR, progression,
+  and plateau metrics are deterministic Python calculations over the
+  normalized model — no LLM, no frontend calculations. Volume analytics,
+  muscles, AI, and recommendations belong to later phases.

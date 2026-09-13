@@ -8,6 +8,10 @@ import {
 } from "@/components/overview-grid";
 import { PrTable, type ExercisePR } from "@/components/pr-table";
 import {
+  PlateauSection,
+  type ExercisePlateau,
+} from "@/components/plateau-section";
+import {
   ProgressionSection,
   type ExerciseProgression,
 } from "@/components/progression-charts";
@@ -51,6 +55,19 @@ async function fetchProgression(): Promise<ExerciseProgression[] | null> {
   }
 }
 
+async function fetchPlateaus(): Promise<ExercisePlateau[] | null> {
+  try {
+    const res = await fetch(`${API_URL}/analysis/plateaus`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { plateaus: ExercisePlateau[] };
+    return body.plateaus;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Upload → overview + PRs + progression flow. All numbers are calculated
  * by the backend; this component only displays them.
@@ -61,6 +78,7 @@ export function WorkoutFlow() {
   const [progression, setProgression] = useState<ExerciseProgression[] | null>(
     null
   );
+  const [plateaus, setPlateaus] = useState<ExercisePlateau[] | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -99,6 +117,18 @@ export function WorkoutFlow() {
     };
   }, [overview]);
 
+  useEffect(() => {
+    if (!overview) return;
+    let active = true;
+    fetchPlateaus().then((data) => {
+      if (!active) return;
+      setPlateaus(data);
+    });
+    return () => {
+      active = false;
+    };
+  }, [overview]);
+
   return (
     <>
       <CsvUpload onOverview={setOverview} />
@@ -128,6 +158,14 @@ export function WorkoutFlow() {
             Progression
           </h2>
           <ProgressionSection exercises={progression} />
+        </section>
+      ) : null}
+      {plateaus ? (
+        <section className="flex w-full flex-col items-center gap-4">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Plateaus
+          </h2>
+          <PlateauSection plateaus={plateaus} />
         </section>
       ) : null}
     </>

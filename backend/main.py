@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from analytics.overview import TrainingOverview, compute_overview
+from analytics.plateau import (
+    PlateauResponse,
+    compute_exercise_plateaus,
+    compute_plateaus,
+)
 from analytics.prs import ExercisePR, generate_exercise_prs
 from analytics.progression import (
     ProgressionResponse,
@@ -165,3 +170,34 @@ def analysis_progression(
             )
         return ProgressionResponse(exercises=[single])
     return compute_progression(workouts)
+
+
+@app.get("/analysis/plateaus", response_model=PlateauResponse)
+def analysis_plateaus(
+    exercise_name: str | None = None,
+) -> PlateauResponse:
+    """Possible-plateau periods for the uploaded dataset.
+
+    Optionally filter to one normalized exercise with
+    ``?exercise_name=...`` (exact match; 404 when unknown).
+    """
+    workouts = _require_dataset()
+    if exercise_name is not None:
+        known = any(
+            e.exercise_name == exercise_name
+            for w in workouts
+            for e in w.exercises
+        )
+        if not known:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error": "unknown_exercise",
+                    "message": f"No exercise named {exercise_name!r} "
+                    "in the uploaded dataset.",
+                },
+            )
+        return PlateauResponse(
+            plateaus=compute_exercise_plateaus(workouts, exercise_name)
+        )
+    return compute_plateaus(workouts)
