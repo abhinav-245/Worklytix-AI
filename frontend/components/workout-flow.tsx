@@ -8,6 +8,10 @@ import {
 } from "@/components/overview-grid";
 import { PrTable, type ExercisePR } from "@/components/pr-table";
 import {
+  MuscleSection,
+  type MuscleAnalysis,
+} from "@/components/muscle-section";
+import {
   PlateauSection,
   type ExercisePlateau,
 } from "@/components/plateau-section";
@@ -68,9 +72,21 @@ async function fetchPlateaus(): Promise<ExercisePlateau[] | null> {
   }
 }
 
+async function fetchMuscles(): Promise<MuscleAnalysis | null> {
+  try {
+    const res = await fetch(`${API_URL}/analysis/muscles`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as MuscleAnalysis;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Upload → overview + PRs + progression flow. All numbers are calculated
- * by the backend; this component only displays them.
+ * Upload → analysis flow. All numbers are calculated by the backend;
+ * this component only displays them.
  */
 export function WorkoutFlow() {
   const [overview, setOverview] = useState<TrainingOverview | null>(null);
@@ -79,6 +95,7 @@ export function WorkoutFlow() {
     null
   );
   const [plateaus, setPlateaus] = useState<ExercisePlateau[] | null>(null);
+  const [muscles, setMuscles] = useState<MuscleAnalysis | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -129,6 +146,18 @@ export function WorkoutFlow() {
     };
   }, [overview]);
 
+  useEffect(() => {
+    if (!overview) return;
+    let active = true;
+    fetchMuscles().then((data) => {
+      if (!active) return;
+      setMuscles(data);
+    });
+    return () => {
+      active = false;
+    };
+  }, [overview]);
+
   return (
     <>
       <CsvUpload onOverview={setOverview} />
@@ -166,6 +195,14 @@ export function WorkoutFlow() {
             Plateaus
           </h2>
           <PlateauSection plateaus={plateaus} />
+        </section>
+      ) : null}
+      {muscles ? (
+        <section className="flex w-full flex-col items-center gap-4">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Muscles
+          </h2>
+          <MuscleSection analysis={muscles} />
         </section>
       ) : null}
     </>

@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from analytics.muscles import MuscleAnalysisResponse, compute_muscles
 from analytics.overview import TrainingOverview, compute_overview
 from analytics.plateau import (
     PlateauResponse,
@@ -201,3 +202,9 @@ def analysis_plateaus(
             plateaus=compute_exercise_plateaus(workouts, exercise_name)
         )
     return compute_plateaus(workouts)
+
+
+@app.get("/analysis/muscles", response_model=MuscleAnalysisResponse)
+def analysis_muscles() -> MuscleAnalysisResponse:
+    """Muscle-level aggregation for the uploaded dataset via the mapping table."""
+    return compute_muscles(_require_dataset())

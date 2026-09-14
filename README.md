@@ -6,7 +6,7 @@ LLM to interpret those calculated results.
 
 ## Current Phase
 
-Phase 6 — Plateau Detection
+Phase 7 — Muscle Mapping
 
 ## Technology
 
@@ -41,10 +41,10 @@ FIT-INTEL/
 │   ├── main.py        # /health, /upload, /analysis/* endpoints
 │   ├── requirements.txt
 │   ├── data/          # CSV pipeline: parser, cleaner, normalizer, models
-│   ├── analytics/     # overview + PRs + progression + plateaus (normalized model only)
+│   ├── analytics/     # overview, PRs, progression, plateaus, muscles
 │   ├── tests/         # unittest suite + Hevy CSV fixture
 │   ├── ai/            # (future phases)
-│   └── mappings/      # (future phases)
+│   └── mappings/      # exercise → primary-muscle mapping table
 ├── README.md
 └── .gitignore
 ```
@@ -181,6 +181,27 @@ python -m unittest discover -s tests -v
   `consecutive_weeks`, `heaviest_weight_kg`, `reps_at_heaviest_weight`,
   and per-week `evidence`). Optional `?exercise_name=...` filter.
   404 `no_dataset` before the first upload.
+- `GET /analysis/muscles` → muscle aggregation
+  (`{ muscles: [...], mapping: {...}, unmapped_exercises: [...] }`): per
+  canonical muscle `total_sets`, `training_sessions`, `exercise_variety`,
+  `average_sessions_per_week`, `potentially_neglected`; plus mapping
+  coverage and the alphabetical unmapped-exercise list.
+  404 `no_dataset` before the first upload. The frontend shows a table,
+  a sets-per-muscle bar chart, coverage, neglected muscles, and unmapped
+  names.
+
+## Muscle mapping
+
+- Deterministic exact-match `exercise → primary muscle` table
+  (`backend/mappings/exercise_muscles.py`); one primary muscle per
+  exercise, no secondary muscles, no AI. Unknown exercises → `null`
+  (reported in `unmapped_exercises`, never "Other", never a neglected
+  muscle).
+- Per muscle: every normalized set of mapped exercises counts (all set
+  types); sessions = distinct workouts with ≥1 mapped set (max 1 per
+  workout); variety = distinct mapped exercise names present.
+- A canonical muscle with zero mapped sets is `Potentially Neglected`
+  (conservative baseline only — no scoring, no recommendations).
 
 ## Plateau detection
 
@@ -218,6 +239,6 @@ python -m unittest discover -s tests -v
 ## Notes
 
 - Uploads are processed in memory; no database. Overview, PR, progression,
-  and plateau metrics are deterministic Python calculations over the
-  normalized model — no LLM, no frontend calculations. Volume analytics,
-  muscles, AI, and recommendations belong to later phases.
+  plateau, and muscle metrics are deterministic Python calculations over the
+  normalized model — no LLM, no frontend calculations. AI and
+  recommendations belong to later phases.
