@@ -2,6 +2,11 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from analytics.exercise_variety import (
+    ExerciseVarietyAnalysis,
+    compute_exercise_variety,
+    compute_single_exercise_variety,
+)
 from analytics.muscles import MuscleAnalysisResponse, compute_muscles
 from analytics.overview import TrainingOverview, compute_overview
 from analytics.plateau import (
@@ -208,3 +213,28 @@ def analysis_plateaus(
 def analysis_muscles() -> MuscleAnalysisResponse:
     """Muscle-level aggregation for the uploaded dataset via the mapping table."""
     return compute_muscles(_require_dataset())
+
+
+@app.get("/analysis/exercise-variety", response_model=ExerciseVarietyAnalysis)
+def analysis_exercise_variety(
+    exercise_name: str | None = None,
+) -> ExerciseVarietyAnalysis:
+    """Exercise-selection facts for the uploaded dataset.
+
+    Optionally filter to one normalized exercise with
+    ``?exercise_name=...`` (exact match; 404 when unknown).
+    """
+    workouts = _require_dataset()
+    if exercise_name is not None:
+        single = compute_single_exercise_variety(workouts, exercise_name)
+        if single is None:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error": "unknown_exercise",
+                    "message": f"No exercise named {exercise_name!r} "
+                    "in the uploaded dataset.",
+                },
+            )
+        return single
+    return compute_exercise_variety(workouts)

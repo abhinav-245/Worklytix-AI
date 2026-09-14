@@ -6,7 +6,7 @@ LLM to interpret those calculated results.
 
 ## Current Phase
 
-Phase 7 — Muscle Mapping
+Phase 8 — Exercise Variety
 
 ## Technology
 
@@ -41,7 +41,7 @@ FIT-INTEL/
 │   ├── main.py        # /health, /upload, /analysis/* endpoints
 │   ├── requirements.txt
 │   ├── data/          # CSV pipeline: parser, cleaner, normalizer, models
-│   ├── analytics/     # overview, PRs, progression, plateaus, muscles
+│   ├── analytics/     # overview, PRs, progression, plateaus, muscles, variety
 │   ├── tests/         # unittest suite + Hevy CSV fixture
 │   ├── ai/            # (future phases)
 │   └── mappings/      # exercise → primary-muscle mapping table
@@ -189,6 +189,25 @@ python -m unittest discover -s tests -v
   404 `no_dataset` before the first upload. The frontend shows a table,
   a sets-per-muscle bar chart, coverage, neglected muscles, and unmapped
   names.
+- `GET /analysis/exercise-variety` → exercise-selection facts
+  (`{ total_workouts, distinct_exercises, exercises, frequencies,
+  exercises_per_muscle, selection_events, selection_summary }`): per-exercise
+  `workout_occurrences`, `frequency_percent` (denominator = total workouts),
+  `rarely_performed` (≤10%), `frequently_performed` (≥50%), and
+  `introduced`/`disappeared`/`reappeared` ISO-week events (training weeks
+  only — global gaps create no events). Optional `?exercise_name=...`
+  filter. 404 `no_dataset` before the first upload. The frontend shows
+  counts, per-muscle variety, a top-exercises bar chart, the frequency
+  table, rare/frequent lists, and the event timeline.
+
+## Exercise variety
+
+- Frequency counts distinct workouts containing the exercise (duplicates
+  within one workout count once); unmapped exercises keep full
+  exercise-level statistics but contribute to no muscle bucket.
+- Selection events are observational only: first presence → `introduced`,
+  present → absent → `disappeared`, absent → present → `reappeared`. They
+  imply no reason and no recommendation.
 
 ## Muscle mapping
 
@@ -239,6 +258,6 @@ python -m unittest discover -s tests -v
 ## Notes
 
 - Uploads are processed in memory; no database. Overview, PR, progression,
-  plateau, and muscle metrics are deterministic Python calculations over the
-  normalized model — no LLM, no frontend calculations. AI and
+  plateau, muscle, and variety metrics are deterministic Python calculations
+  over the normalized model — no LLM, no frontend calculations. AI and
   recommendations belong to later phases.

@@ -12,6 +12,10 @@ import {
   type MuscleAnalysis,
 } from "@/components/muscle-section";
 import {
+  VarietySection,
+  type ExerciseVariety,
+} from "@/components/variety-section";
+import {
   PlateauSection,
   type ExercisePlateau,
 } from "@/components/plateau-section";
@@ -84,6 +88,18 @@ async function fetchMuscles(): Promise<MuscleAnalysis | null> {
   }
 }
 
+async function fetchVariety(): Promise<ExerciseVariety | null> {
+  try {
+    const res = await fetch(`${API_URL}/analysis/exercise-variety`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as ExerciseVariety;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Upload → analysis flow. All numbers are calculated by the backend;
  * this component only displays them.
@@ -96,6 +112,7 @@ export function WorkoutFlow() {
   );
   const [plateaus, setPlateaus] = useState<ExercisePlateau[] | null>(null);
   const [muscles, setMuscles] = useState<MuscleAnalysis | null>(null);
+  const [variety, setVariety] = useState<ExerciseVariety | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -158,6 +175,18 @@ export function WorkoutFlow() {
     };
   }, [overview]);
 
+  useEffect(() => {
+    if (!overview) return;
+    let active = true;
+    fetchVariety().then((data) => {
+      if (!active) return;
+      setVariety(data);
+    });
+    return () => {
+      active = false;
+    };
+  }, [overview]);
+
   return (
     <>
       <CsvUpload onOverview={setOverview} />
@@ -203,6 +232,14 @@ export function WorkoutFlow() {
             Muscles
           </h2>
           <MuscleSection analysis={muscles} />
+        </section>
+      ) : null}
+      {variety ? (
+        <section className="flex w-full flex-col items-center gap-4">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Exercise Variety
+          </h2>
+          <VarietySection variety={variety} />
         </section>
       ) : null}
     </>
