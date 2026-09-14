@@ -2,178 +2,137 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Dumbbell, Menu, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Menu, X } from "lucide-react";
+import { BrandMark, BrandWordmark } from "@/components/brand";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
+const MENU_ITEMS = [
+  { href: "/ai-analysis", label: "AI Analysis" },
   { href: "/", label: "Home", exact: true },
   { href: "/overview", label: "Overview" },
   { href: "/pr", label: "PR" },
   { href: "/progression", label: "Progression" },
   { href: "/volume", label: "Volume" },
   { href: "/plateau", label: "Plateau" },
-  { href: "/insights", label: "Insights" },
-];
-
-const MORE_ITEMS = [
   { href: "/muscles", label: "Muscles" },
   { href: "/exercises", label: "Exercises" },
-  { href: "/profile", label: "Profile" },
 ];
 
-/** Sticky glass header: brand, route nav with gold active state, CTA. */
-export function DashboardHeader({
-  datasetLoaded,
-  statusLine,
-}: {
-  datasetLoaded: boolean;
-  statusLine: string | null;
-}) {
+/**
+ * Minimal floating Obsidian Glow navbar: brand left, Menu + Try Out
+ * right. The pill floats with clear breathing room on both viewport
+ * sides. The Menu control opens a glass panel with every section
+ * (Profile intentionally absent). One control serves desktop + mobile.
+ */
+export function DashboardHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
-  const moreActive = MORE_ITEMS.some((item) => isActive(item.href));
 
-  const linkClass = (active: boolean) =>
-    cn(
-      "rounded-md px-3 py-2 text-sm transition-colors",
-      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-      active
-        ? "bg-[var(--gold-soft)] text-[var(--gold)]"
-        : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
-    );
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
+    const onPointer = (e: PointerEvent) => {
+      if (
+        panelRef.current &&
+        !panelRef.current.contains(e.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(e.target as Node)
+      ) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+    };
+  }, [menuOpen]);
 
   return (
-    <header className="glass sticky top-0 z-50 border-x-0 border-t-0">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" className="group flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--gold-soft)] bg-[var(--gold-soft)] transition-colors group-hover:border-[var(--gold)]">
-            <Dumbbell className="h-5 w-5 text-[var(--gold)]" aria-hidden />
-          </span>
-          <span className="text-lg font-bold tracking-tight">
-            FIT<span className="metric-gold">-</span>INTEL
-          </span>
-        </Link>
-        <nav
-          aria-label="Analytics sections"
-          className="hidden items-center gap-1 lg:flex"
+    <header className="sticky top-0 z-50 px-4 pt-3 sm:px-6 sm:pt-4">
+      <div className="glass mx-auto flex h-16 w-full max-w-4xl items-center justify-between gap-2 rounded-2xl px-2.5 shadow-[0_16px_48px_rgba(0,0,0,0.55),0_0_32px_rgba(212,164,58,0.08)] sm:gap-4 sm:rounded-full sm:px-4">
+        <Link
+          href="/"
+          className="flex min-w-0 items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:gap-2.5"
+          aria-label="WorkLytix AI home"
         >
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isActive(item.href, item.exact) ? "page" : undefined}
-              className={linkClass(isActive(item.href, item.exact))}
-            >
-              {item.label}
-            </Link>
-          ))}
-          <div
-            className="relative"
-            onMouseEnter={() => setMoreOpen(true)}
-            onMouseLeave={() => setMoreOpen(false)}
+          <BrandMark size={32} />
+          <BrandWordmark />
+        </Link>
+        <div className="relative flex shrink-0 items-center gap-1.5 sm:gap-3">
+          <button
+            ref={buttonRef}
+            type="button"
+            aria-expanded={menuOpen}
+            aria-haspopup="true"
+            aria-controls="site-menu"
+            onClick={() => setMenuOpen((v) => !v)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-2 text-sm font-medium whitespace-nowrap transition-colors sm:gap-2 sm:px-3",
+              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+              menuOpen
+                ? "bg-white/[0.08] text-foreground"
+                : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+            )}
           >
-            <button
-              type="button"
-              aria-expanded={moreOpen}
-              aria-haspopup="true"
-              onClick={() => setMoreOpen((v) => !v)}
-              className={linkClass(moreActive)}
+            {menuOpen ? (
+              <X className="h-4 w-4" aria-hidden />
+            ) : (
+              <Menu className="h-4 w-4" aria-hidden />
+            )}
+            Menu
+          </button>
+          <Link
+            href="/ai-analysis"
+            className="rounded-full bg-gradient-to-b from-[#F0C75E] to-[#B47A1B] px-3.5 py-2 text-[13px] font-semibold whitespace-nowrap text-[#171207] shadow-[0_0_20px_rgba(212,164,58,0.30)] transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:px-4 sm:text-sm"
+          >
+            AI Analysis
+          </Link>
+          {menuOpen ? (
+            <div
+              ref={panelRef}
+              id="site-menu"
+              role="menu"
+              aria-label="Site sections"
+              className="glass absolute top-full right-0 mt-2 flex w-56 flex-col gap-1 rounded-xl p-2"
             >
-              More
-            </button>
-            {moreOpen ? (
-              <div className="glass absolute top-full right-0 mt-1 flex min-w-40 flex-col gap-1 rounded-lg p-2">
-                {MORE_ITEMS.map((item) => (
+              {MENU_ITEMS.map((item) => {
+                const active = isActive(item.href, item.exact);
+                return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={() => setMoreOpen(false)}
-                    aria-current={isActive(item.href) ? "page" : undefined}
-                    className={linkClass(isActive(item.href))}
+                    role="menuitem"
+                    aria-current={active ? "page" : undefined}
+                    onClick={() => setMenuOpen(false)}
+                    className={cn(
+                      "rounded-md px-3 py-2 text-sm transition-colors",
+                      "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                      active
+                        ? "bg-[var(--gold-soft)] text-[var(--gold-bright)]"
+                        : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                    )}
                   >
                     {item.label}
                   </Link>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </nav>
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              "hidden items-center gap-1.5 rounded-full border px-3 py-1 text-xs sm:inline-flex",
-              datasetLoaded
-                ? "border-[var(--gold-soft)] text-[var(--gold)]"
-                : "border-white/10 text-muted-foreground"
-            )}
-            role="status"
-          >
-            <span
-              className={cn(
-                "h-1.5 w-1.5 rounded-full",
-                datasetLoaded ? "bg-[var(--gold)]" : "bg-muted-foreground"
-              )}
-              aria-hidden
-            />
-            {datasetLoaded ? "Dataset loaded" : "No dataset"}
-          </span>
-          {statusLine ? (
-            <span className="hidden max-w-48 truncate text-xs text-muted-foreground xl:inline">
-              {statusLine}
-            </span>
+                );
+              })}
+            </div>
           ) : null}
-          <Link
-            href="/#get-started"
-            className="rounded-md bg-[var(--gold)] px-3 py-2 text-sm font-medium text-black transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
-            Get Started
-          </Link>
-          <button
-            type="button"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((v) => !v)}
-            className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-white/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring lg:hidden"
-          >
-            {menuOpen ? (
-              <X className="h-5 w-5" aria-hidden />
-            ) : (
-              <Menu className="h-5 w-5" aria-hidden />
-            )}
-          </button>
         </div>
       </div>
-      {menuOpen ? (
-        <nav
-          aria-label="Analytics sections mobile"
-          className="glass border-x-0 border-b-0 lg:hidden"
-        >
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 py-3 sm:px-6">
-            {[...NAV_ITEMS, ...MORE_ITEMS].map((item) => {
-              const exact = "exact" in item && item.exact === true;
-              const active = exact
-                ? pathname === item.href
-                : pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMenuOpen(false)}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(linkClass(active), "block")}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-      ) : null}
     </header>
   );
 }

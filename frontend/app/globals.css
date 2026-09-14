@@ -4,59 +4,72 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * FIT-INTEL theme: near-black foundation, gold primary accent.
- * The app is dark-first: :root carries the dark palette so the product
- * looks identical with or without the `.dark` class.
+ * WorkLytix AI — Obsidian Glow identity.
+ * Deep black foundation, warm-black surfaces, restrained metallic gold.
+ * Dark-first: :root carries the palette with or without `.dark`.
  */
 :root {
+  color-scheme: dark;
   --radius: 0.625rem;
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.18 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.76 0.15 84);
-  --primary-foreground: oklch(0.16 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.32 0.04 84);
-  --accent-foreground: oklch(0.95 0.08 84);
+  --background: #050505;
+  --foreground: #f5f5f5;
+  --card: #0d0d0d;
+  --card-foreground: #f5f5f5;
+  --popover: #121212;
+  --popover-foreground: #f5f5f5;
+  --primary: #d4a43a;
+  --primary-foreground: #171207;
+  --secondary: #121212;
+  --secondary-foreground: #f5f5f5;
+  --muted: #0a0a0a;
+  --muted-foreground: #a6a6a6;
+  --accent: #171207;
+  --accent-foreground: #f0c75e;
   --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.76 0.15 84);
-  --gold: oklch(0.76 0.15 84);
-  --gold-soft: oklch(0.76 0.15 84 / 35%);
-  --glass: oklch(0.19 0 0 / 72%);
+  --destructive-foreground: #f5f5f5;
+  --border: rgb(255 255 255 / 8%);
+  --input: rgb(255 255 255 / 12%);
+  --ring: #d4a43a;
+  --gold: #d4a43a;
+  --gold-deep: #8a5a12;
+  --gold-mid: #b47a1b;
+  --gold-bright: #f0c75e;
+  --gold-pale: #ffd978;
+  --gold-soft: rgb(212 164 58 / 22%);
+  --gold-glow: rgb(212 164 58 / 18%);
+  --gold-glow-strong: rgb(212 164 58 / 30%);
+  --glass: rgb(13 13 13 / 72%);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.18 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.76 0.15 84);
-  --primary-foreground: oklch(0.16 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.32 0.04 84);
-  --accent-foreground: oklch(0.95 0.08 84);
+  --background: #050505;
+  --foreground: #f5f5f5;
+  --card: #0d0d0d;
+  --card-foreground: #f5f5f5;
+  --popover: #121212;
+  --popover-foreground: #f5f5f5;
+  --primary: #d4a43a;
+  --primary-foreground: #171207;
+  --secondary: #121212;
+  --secondary-foreground: #f5f5f5;
+  --muted: #0a0a0a;
+  --muted-foreground: #a6a6a6;
+  --accent: #171207;
+  --accent-foreground: #f0c75e;
   --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.76 0.15 84);
-  --gold: oklch(0.76 0.15 84);
-  --gold-soft: oklch(0.76 0.15 84 / 35%);
-  --glass: oklch(0.19 0 0 / 72%);
+  --destructive-foreground: #f5f5f5;
+  --border: rgb(255 255 255 / 8%);
+  --input: rgb(255 255 255 / 12%);
+  --ring: #d4a43a;
+  --gold: #d4a43a;
+  --gold-deep: #8a5a12;
+  --gold-mid: #b47a1b;
+  --gold-bright: #f0c75e;
+  --gold-pale: #ffd978;
+  --gold-soft: rgb(212 164 58 / 22%);
+  --gold-glow: rgb(212 164 58 / 18%);
+  --gold-glow-strong: rgb(212 164 58 / 30%);
+  --glass: rgb(13 13 13 / 72%);
 }
 
 @theme inline {
@@ -92,32 +105,54 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family:
+      var(--font-dm-sans),
+      "DM Sans",
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+    background-color: #030303;
     background-image:
       radial-gradient(
         60rem 30rem at 50% -10rem,
-        oklch(0.76 0.15 84 / 7%),
+        rgb(212 164 58 / 7%),
         transparent 60%
       ),
       radial-gradient(
         40rem 24rem at 85% 110%,
-        oklch(0.76 0.15 84 / 4%),
+        rgb(212 164 58 / 4%),
         transparent 60%
       );
     background-attachment: fixed;
   }
   ::selection {
-    background: oklch(0.76 0.15 84 / 35%);
+    background: rgb(212 164 58 / 35%);
+  }
+
+  /*
+   * Native dropdowns: without `color-scheme: dark` above, browsers
+   * render the <option> popup with a light OS theme while page text
+   * stays near-white (white-on-white). These rules back up the
+   * color-scheme so every native select matches the obsidian theme.
+   */
+  select option {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+  }
+  select:disabled {
+    opacity: 0.5;
   }
 }
 
 @layer components {
-  /* Glass surface: translucent dark + blur + subtle border + soft shadow. */
+  /* Glass surface: translucent obsidian + blur + thin border + soft shadow. */
   .glass {
     background-color: var(--glass);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid oklch(1 0 0 / 10%);
-    box-shadow: 0 12px 32px oklch(0 0 0 / 45%);
+    @apply backdrop-blur-md;
+    border: 1px solid rgb(255 255 255 / 8%);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 45%);
   }
 
   /* Restrained hover lift used on interactive glass surfaces. */
@@ -131,15 +166,59 @@
   .glass-hover:hover {
     border-color: var(--gold-soft);
     box-shadow:
-      0 12px 32px oklch(0 0 0 / 45%),
+      0 12px 32px rgb(0 0 0 / 45%),
       0 0 0 1px var(--gold-soft),
-      0 0 24px oklch(0.76 0.15 84 / 12%);
+      0 0 24px rgb(212 164 58 / 12%);
     transform: translateY(-2px);
   }
 
   /* Gold metric value. */
   .metric-gold {
     color: var(--gold);
+  }
+
+  /*
+   * Brand typeface: PP Pangaia (commercial license) for the WorkLytix AI
+   * name only. No licensed file ships with the repo, so the stack falls
+   * back to an elegant editorial serif until the license is added.
+   * To activate genuine PP Pangaia: place the licensed woff2 at
+   * public/fonts/pp-pangaia-medium.woff2 and uncomment the @font-face
+   * block below -- no other change needed.
+   */
+  /*
+  @font-face {
+    font-family: "PP Pangaia";
+    src: url("/fonts/pp-pangaia-medium.woff2") format("woff2");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
+  */
+  .font-brand {
+    font-family:
+      "PP Pangaia",
+      "Didot",
+      "Bodoni MT",
+      "Playfair Display",
+      Georgia,
+      "Times New Roman",
+      serif;
+    letter-spacing: 0.01em;
+  }
+
+  /* Gold gradient display text (headlines only). */
+  .text-gold-gradient {
+    background: linear-gradient(
+      100deg,
+      var(--gold-deep) 0%,
+      var(--gold) 35%,
+      var(--gold-pale) 55%,
+      var(--gold) 75%,
+      var(--gold-deep) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
   /* Thin gold top accent for highlight cards. */
@@ -160,5 +239,132 @@
       var(--gold-soft),
       transparent
     );
+  }
+
+  /* Immersive hero backdrop: obsidian + warm-black wash + gold glow. */
+  .hero-glow {    background:
+      radial-gradient(
+        42rem 26rem at 78% 42%,
+        var(--gold-glow-strong),
+        transparent 62%
+      ),
+      radial-gradient(
+        56rem 34rem at 50% -8rem,
+        var(--gold-glow),
+        transparent 60%
+      ),
+      linear-gradient(
+        180deg,
+        #050505 0%,
+        #0a0a0a 55%,
+        #030303 100%
+      );
+  }
+
+  /* Subtle entrance motion for hero content. */
+  @keyframes obsidian-rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-obsidian-rise {
+    animation: obsidian-rise 700ms ease both;
+  }
+  .animate-obsidian-rise-delayed {
+    animation: obsidian-rise 700ms ease 120ms both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-obsidian-rise,
+    .animate-obsidian-rise-delayed {
+      animation: none;
+    }
+    .glass-hover:hover {
+      transform: none;
+    }
+  }
+
+  /* Conversational assistant content: editorial measure, quiet hierarchy. */
+  .ai-markdown {
+    font-size: 0.9375rem;
+    line-height: 1.75;
+    color: var(--foreground);
+    overflow-wrap: break-word;
+  }
+  .ai-markdown > *:first-child {
+    margin-top: 0;
+  }
+  .ai-markdown > *:last-child {
+    margin-bottom: 0;
+  }
+  .ai-markdown h1 {
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.75rem;
+  }
+  .ai-markdown h2 {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    margin: 1.5rem 0 0.5rem;
+    color: var(--gold-bright);
+  }
+  .ai-markdown h3 {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    margin: 1.25rem 0 0.375rem;
+  }
+  .ai-markdown p {
+    margin: 0 0 0.75rem;
+    color: #d9d9d9;
+  }
+  .ai-markdown ul,
+  .ai-markdown ol {
+    margin: 0 0 0.75rem;
+    padding-left: 1.375rem;
+  }
+  .ai-markdown li {
+    margin-bottom: 0.375rem;
+    color: #d9d9d9;
+  }
+  .ai-markdown li::marker {
+    color: var(--gold);
+  }
+  .ai-markdown strong {
+    color: var(--foreground);
+    font-weight: 700;
+  }
+  .ai-markdown em {
+    color: var(--foreground);
+  }
+  .ai-markdown code {
+    font-size: 0.8125rem;
+    background: rgb(255 255 255 / 6%);
+    border: 1px solid rgb(255 255 255 / 8%);
+    border-radius: 0.375rem;
+    padding: 0.0625rem 0.375rem;
+  }
+  .ai-markdown table {
+    width: 100%;
+    margin: 0 0 0.75rem;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+    display: block;
+    overflow-x: auto;
+  }
+  .ai-markdown th,
+  .ai-markdown td {
+    border: 1px solid rgb(255 255 255 / 10%);
+    padding: 0.375rem 0.625rem;
+    text-align: left;
+  }
+  .ai-markdown th {
+    color: var(--gold-bright);
+    font-weight: 700;
   }
 }

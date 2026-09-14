@@ -150,7 +150,7 @@ export function Onboarding() {
             ref={fileInputRef}
             type="file"
             accept=".csv,text/csv"
-            className="sr-only"
+            className="hidden"
             tabIndex={-1}
             disabled={busy}
             onChange={(e) => pickFile(e.target.files?.[0] ?? null)}

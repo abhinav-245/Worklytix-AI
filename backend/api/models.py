@@ -23,6 +23,7 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
+from ai.models import AIResponseData, RecommendationResponseData
 from analytics.prs import ExercisePR
 
 #: Version string for the standardized analytics contract.
@@ -56,6 +57,38 @@ class PRListData(BaseModel):
     exercises: list[ExercisePR] = Field(default_factory=list)
 
 
+class AIAPIMeta(BaseModel):
+    """Envelope metadata for AI responses: contract version plus model."""
+
+    analysis_version: str = Field(
+        default=ANALYSIS_VERSION,
+        description="Versioned analytics API contract.",
+    )
+    model: str = Field(description="Provider model that produced the answer.")
+
+
+class AIAPIResponse(BaseModel):
+    """Standard success envelope for POST /ai/ask."""
+
+    success: bool = Field(
+        default=True, description="True for successful AI responses."
+    )
+    data: AIResponseData = Field(description="Validated AI interpretation.")
+    meta: AIAPIMeta = Field(description="Contract version and model name.")
+
+
+class RecommendAPIResponse(BaseModel):
+    """Standard success envelope for POST /ai/recommend."""
+
+    success: bool = Field(
+        default=True, description="True for successful AI responses."
+    )
+    data: RecommendationResponseData = Field(
+        description="Validated optional recommendations."
+    )
+    meta: AIAPIMeta = Field(description="Contract version and model name.")
+
+
 def wrap(data: T) -> APIResponse[T]:
     """Wrap a domain payload in the standard success envelope."""
     return APIResponse(data=data)
@@ -66,5 +99,8 @@ __all__ = [
     "APIMeta",
     "APIResponse",
     "PRListData",
+    "AIAPIMeta",
+    "AIAPIResponse",
+    "RecommendAPIResponse",
     "wrap",
 ]

@@ -1,21 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Fitness Intelligence",
-  description: "Fitness-data analysis application.",
+  title: "WorkLytix AI",
+  description:
+    "WorkLytix AI turns workout data into deterministic analytics and AI-powered interpretation.",
 };
 
 export default function RootLayout({
@@ -26,15 +24,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${dmSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <SiteHeader />
         {children}
         <footer className="mx-auto w-full max-w-6xl px-4 pb-8 sm:px-6">
           <p className="text-center text-xs text-muted-foreground">
-            FIT-INTEL · deterministic training analytics · no AI
-            recommendations
+            <span className="font-brand text-sm text-[#F5F5F5]">
+              WorkLytix AI
+            </span>{" "}
+            · deterministic training analytics
           </p>
         </footer>
       </body>

@@ -6,7 +6,7 @@ LLM to interpret those calculated results.
 
 ## Current Phase
 
-Phase 11 (revised) — Home / Onboarding, compact Overview, dedicated analytics routes
+Phase 12 — AI Interpretation (Gemini 2.5 Flash, grounded in deterministic analytics)
 
 ## Technology
 
@@ -26,6 +26,7 @@ Backend:
 - Pandas (CSV pipeline)
 - python-multipart (file uploads)
 - httpx (backend tests only, via FastAPI TestClient)
+- google-genai (Gemini 2.5 Flash AI interpretation; server-side only)
 
 ## Project structure
 
@@ -42,10 +43,10 @@ FIT-INTEL/
 │   ├── requirements.txt
 │   ├── data/          # CSV pipeline: parser, cleaner, normalizer, models
 │   ├── analytics/     # overview, PRs, progression, volume, plateaus, muscles, variety, profile
+│   ├── ai/            # Phase 12: Gemini interpretation (context, prompts, service, validation)
 │   ├── api/           # standardized {success, data, meta} envelope models
 │   ├── tests/         # unittest suite + Hevy CSV fixture
-│   ├── ai/            # (future phases)
-│   └── mappings/      # exercise → primary-muscle mapping table
+│   ├── mappings/      # exercise → primary-muscle mapping table
 ├── README.md
 └── .gitignore
 ```
@@ -316,11 +317,61 @@ result exists. Components receive the same domain shapes as before.
   zero-filled or inferred; such sets are ineligible. Ties resolve to the
   earliest occurrence.
 
+## AI interpretation (Gemini 2.5 Flash)
+
+- `POST /ai/ask` answers training questions using Gemini 2.5 Flash
+  (`google-genai` 2.x SDK, `models.generate_content` with a JSON
+  `response_schema`). No analytics are calculated by the LLM or the
+  frontend; every number comes from the deterministic engines.
+- Server-side key only: `backend/.env` holds `GEMINI_API_KEY` (and
+  optional `GEMINI_MODEL`, default `gemini-2.5-flash`). Placeholders live
+  in `backend/.env.example` — never a real key. `.env` is git-ignored.
+  The key is never sent to the frontend, never logged, and the frontend
+  has no `NEXT_PUBLIC_*` key variable.
+- Each request rebuilds a compact versioned analytics context from the
+  live dataset/profile (summaries always; per-point detail only for
+  exercises named in the question). The raw CSV is never sent.
+- Every context fact gets a stable backend-generated ID (e.g.
+  `pr:bench_press_barbell:weight_pr`); observations must cite valid IDs,
+  and measured values in factual statements must appear in the context.
+  Violations trigger one corrective retry, then a controlled error.
+- Responses distinguish `answer`, grounded `observations`, `assumptions`
+  (possible but unproven) and `limitations` (unavailable data such as
+  nutrition, sleep or recovery — reported as unavailable, never invented).
+- Errors: `no_dataset` (404), `ai_not_configured` (503),
+  `ai_provider_error` (502); invalid questions keep FastAPI 422s.
+- Ask My Training lives on `/insights` (suggested questions, chat with
+  loading/error states, session-only history, max 20 turns).
+- AI does not replace deterministic analytics and makes no autonomous
+  recommendations.
+
 ## Notes
 
 - Uploads and profiles live in memory; no database. Overview, PR,
   progression, volume, plateau, muscle, variety, and profile metrics are
   deterministic Python calculations over the normalized model — no LLM, no
   frontend calculations. The analytics API wraps them in a versioned
-  `{success, data, meta}` envelope for the dashboard and future AI layer.
-  AI and recommendations belong to later phases.
+  `{success, data, meta}` envelope for the dashboard and the AI layer.
+  AI interpretation is grounded in those analytics; autonomous
+  recommendations belong to later phases.
+
+## Browser UI verification
+
+Reusable Playwright + Chromium smoke test for the rendered Next.js UI.
+
+- Setup (one time, from `frontend/`): `npm install` then
+  `npx playwright install chromium`. Playwright uses its own Chromium
+  build, independent of any installed Chrome.
+- Normal command (from `frontend/`): `npm run test:e2e`. The config
+  reuses `http://localhost:3000` when already running, otherwise starts
+  `next dev` automatically via `webServer`.
+- Headed/debug: `npm run test:e2e:headed` (visible browser),
+  `npm run test:e2e:ui` (interactive Playwright UI mode).
+- Smoke suite: `frontend/e2e/ui-smoke.spec.ts` (homepage, header/menu,
+  onboarding entry, routes incl. `/profile` 404, dropdown usability,
+  mobile 375x812, console/page/network errors, checkpoint screenshots).
+- Failure evidence: `frontend/test-results/` (screenshots) plus traces
+  retained on failure (`playwright.config.ts`: `trace:
+  retain-on-failure`, `screenshot: only-on-failure`).
+- Future UI phases: run `npm run test:e2e` after UI changes; extend with
+  focused per-phase specs rather than growing the smoke suite.

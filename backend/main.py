@@ -35,7 +35,28 @@ from analytics.volume import (
     compute_exercise_volume,
     compute_volume,
 )
-from api.models import APIResponse, PRListData, wrap
+from ai.config import load_gemini_config
+from ai.models import (
+    AIResponseData,
+    AskRequest,
+    RecommendationResponseData,
+    RecommendRequest,
+)
+from ai.service import (
+    AINotConfiguredError,
+    AIProviderError,
+    analyze_training,
+    answer_question,
+    recommend_training,
+)
+from api.models import (
+    AIAPIMeta,
+    AIAPIResponse,
+    APIResponse,
+    PRListData,
+    RecommendAPIResponse,
+    wrap,
+)
 from data.models import UploadResponse, WorkoutRecord
 from data.parser import CSVPipelineError, MissingColumnsError
 from data.pipeline import process_csv_bytes
@@ -345,3 +366,159 @@ def analysis_profile() -> APIResponse[ProfileAnalysis]:
 def analysis_frequency() -> APIResponse[TrainingFrequencyResponse]:
     """Continuous ISO-week workout counts for the uploaded dataset."""
     return wrap(compute_training_frequency(_require_dataset()))
+
+
+@app.post("/ai/ask", response_model=AIAPIResponse)
+def ai_ask(request: AskRequest) -> AIAPIResponse:
+    """Answer one training question via Gemini-grounded interpretation.
+
+    Analytics context is rebuilt from the live in-memory dataset and
+    profile on every request; the frontend never supplies analytics.
+    404 ``no_dataset`` before upload, 503 ``ai_not_configured`` without
+    a server-side API key, 502 ``ai_provider_error`` on provider or
+    grounding failure. Request validation failures keep FastAPI 422s.
+    """
+    workouts = _require_dataset()
+    config = load_gemini_config()
+    try:
+        result = answer_question(
+            request, workouts, _LAST_PROFILE, config=config
+        )
+    except AINotConfiguredError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "ai_not_configured",
+                "message": "AI interpretation is not configured on "
+                "this server.",
+            },
+        ) from exc
+    except AIProviderError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "error": "ai_provider_error",
+                "message": "The AI provider did not return a usable "
+                "answer. Please try again.",
+            },
+        ) from exc
+    return AIAPIResponse(
+        data=AIResponseData(
+            answer=result.answer,
+            observations=result.observations,
+            assumptions=result.assumptions,
+            limitations=result.limitations,
+        ),
+        meta=AIAPIMeta(model=config.model),
+    )
+
+
+@app.post("/ai/recommend", response_model=RecommendAPIResponse)
+def ai_recommend(request: RecommendRequest) -> RecommendAPIResponse:
+    """Generate personalized recommendations via Gemini (v2 engine).
+
+    Second conversational stage: the frontend sends back the analysis
+    text shown to the user as context only. Goal, profile, analytics,
+    and knowledge selection remain backend-authoritative. 404
+    ``no_dataset`` before upload, 404 ``no_profile`` before profile
+    submission, 503 ``ai_not_configured`` without a server-side API
+    key, 502 ``ai_provider_error`` on provider or grounding failure.
+    Invalid bodies keep FastAPI 422s.
+    """
+    workouts = _require_dataset()
+    if _LAST_PROFILE is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "no_profile",
+                "message": "No profile has been submitted yet. "
+                "POST a profile to /profile first.",
+            },
+        )
+    config = load_gemini_config()
+    try:
+        result = recommend_training(
+            workouts, _LAST_PROFILE, request.analysis, config=config
+        )
+    except AINotConfiguredError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "ai_not_configured",
+                "message": "AI interpretation is not configured on "
+                "this server.",
+            },
+        ) from exc
+    except AIProviderError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "error": "ai_provider_error",
+                "message": "The AI provider did not return a usable "
+                "answer. Please try again.",
+            },
+        ) from exc
+    return RecommendAPIResponse(
+        data=RecommendationResponseData(
+            recommendations=result.recommendations,
+            observations=result.observations,
+            assumptions=result.assumptions,
+            limitations=result.limitations,
+        ),
+        meta=AIAPIMeta(model=config.model),
+    )
+
+
+@app.post("/ai/analyze", response_model=AIAPIResponse)
+def ai_analyze() -> AIAPIResponse:
+    """Generate the comprehensive initial training analysis via Gemini.
+
+    First conversational stage: no question needed. The backend builds
+    the complete deterministic context from the live in-memory dataset
+    and authoritative profile. 404 ``no_dataset`` before upload, 404
+    ``no_profile`` before profile submission, 503 ``ai_not_configured``
+    without a server-side API key, 502 ``ai_provider_error`` on
+    provider or grounding failure.
+    """
+    workouts = _require_dataset()
+    if _LAST_PROFILE is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "no_profile",
+                "message": "No profile has been submitted yet. "
+                "POST a profile to /profile first.",
+            },
+        )
+    config = load_gemini_config()
+    try:
+        result = analyze_training(
+            workouts, _LAST_PROFILE, config=config
+        )
+    except AINotConfiguredError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "ai_not_configured",
+                "message": "AI interpretation is not configured on "
+                "this server.",
+            },
+        ) from exc
+    except AIProviderError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "error": "ai_provider_error",
+                "message": "The AI provider did not return a usable "
+                "answer. Please try again.",
+            },
+        ) from exc
+    return AIAPIResponse(
+        data=AIResponseData(
+            answer=result.answer,
+            observations=result.observations,
+            assumptions=result.assumptions,
+            limitations=result.limitations,
+        ),
+        meta=AIAPIMeta(model=config.model),
+    )
