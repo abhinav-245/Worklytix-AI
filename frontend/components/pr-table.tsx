@@ -26,6 +26,8 @@ export interface ExercisePR {
     reps: number;
     date: string | null;
   } | null;
+  weight_pr_ratio: number | null;
+  estimated_1rm_pr_ratio: number | null;
 }
 
 function formatKg(pr: { value: number } | null): string {
@@ -38,6 +40,11 @@ function formatReps(pr: { value: number } | null): string {
   return `${pr.value.toLocaleString("en-US")}`;
 }
 
+function formatRatio(ratio: number | null): string {
+  if (ratio === null) return "—";
+  return `${ratio.toLocaleString("en-US")}×`;
+}
+
 /** Backend-calculated PR facts, rendered as a table. No calculations here. */
 export function PrTable({ prs }: { prs: ExercisePR[] }) {
   return (
@@ -46,9 +53,11 @@ export function PrTable({ prs }: { prs: ExercisePR[] }) {
         <TableRow>
           <TableHead>Exercise</TableHead>
           <TableHead>Weight PR</TableHead>
+          <TableHead>BW Ratio</TableHead>
           <TableHead>Rep PR</TableHead>
           <TableHead>Volume PR</TableHead>
           <TableHead>Est. 1RM PR</TableHead>
+          <TableHead>1RM/BW</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -56,9 +65,11 @@ export function PrTable({ prs }: { prs: ExercisePR[] }) {
           <TableRow key={pr.exercise_name}>
             <TableCell className="font-medium">{pr.exercise_name}</TableCell>
             <TableCell>{formatKg(pr.weight_pr)}</TableCell>
+            <TableCell>{formatRatio(pr.weight_pr_ratio)}</TableCell>
             <TableCell>{formatReps(pr.rep_pr)}</TableCell>
             <TableCell>{formatKg(pr.volume_pr)}</TableCell>
             <TableCell>{formatKg(pr.estimated_1rm_pr)}</TableCell>
+            <TableCell>{formatRatio(pr.estimated_1rm_pr_ratio)}</TableCell>
           </TableRow>
         ))}
       </TableBody>

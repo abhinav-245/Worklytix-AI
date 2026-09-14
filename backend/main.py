@@ -9,6 +9,12 @@ from analytics.exercise_variety import (
 )
 from analytics.muscles import MuscleAnalysisResponse, compute_muscles
 from analytics.overview import TrainingOverview, compute_overview
+from analytics.profile import (
+    ProfileAnalysis,
+    UserProfile,
+    attach_bodyweight_ratios,
+    compute_training_history,
+)
 from analytics.plateau import (
     PlateauResponse,
     compute_exercise_plateaus,
@@ -57,6 +63,9 @@ class UploadWithOverview(UploadResponse):
 # No database by design; per-process memory (a multi-worker deployment would
 # need shared state later). Reset on restart; 404 until the first upload.
 _LAST_WORKOUTS: list[WorkoutRecord] | None = None
+
+# In-memory V1 user profile (no database, no persistence across restarts).
+_LAST_PROFILE: UserProfile | None = None
 
 
 @app.post("/upload", response_model=UploadWithOverview)
@@ -126,7 +135,11 @@ def analysis_overview():
 
 @app.get("/analysis/prs", response_model=list[ExercisePR])
 def analysis_prs():
-    """Per-exercise PR facts for the most recently uploaded dataset."""
+    """Per-exercise PR facts for the most recently uploaded dataset.
+
+    When a profile with body weight exists, bodyweight-relative ratios are
+    attached (backend-calculated); otherwise the ratio fields stay null.
+    """
     if _LAST_WORKOUTS is None:
         raise HTTPException(
             status_code=404,
@@ -136,7 +149,27 @@ def analysis_prs():
                 "POST a CSV to /upload first.",
             },
         )
-    return generate_exercise_prs(_LAST_WORKOUTS)
+    prs = generate_exercise_prs(_LAST_WORKOUTS)
+    if _LAST_PROFILE is not None:
+        prs = attach_bodyweight_ratios(prs, _LAST_PROFILE.body_weight_kg)
+    return prs
+
+
+@app.post("/profile", response_model=ProfileAnalysis, status_code=200)
+def submit_profile(profile: UserProfile) -> ProfileAnalysis:
+    """Validate and store the V1 user profile in memory.
+
+    Accepted independently of CSV upload; training history is null until
+    workouts exist. Invalid input returns 422 (never silently corrected).
+    """
+    global _LAST_PROFILE
+    _LAST_PROFILE = profile
+    history = (
+        compute_training_history(_LAST_WORKOUTS)
+        if _LAST_WORKOUTS is not None
+        else None
+    )
+    return ProfileAnalysis(profile=profile, training_history=history)
 
 
 def _require_dataset() -> list[WorkoutRecord]:

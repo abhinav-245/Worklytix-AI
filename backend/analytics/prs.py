@@ -85,6 +85,16 @@ class ExercisePR(BaseModel):
     rep_pr: RepPR | None = None
     volume_pr: VolumePR | None = None
     estimated_1rm_pr: Estimated1RMPR | None = None
+    weight_pr_ratio: float | None = Field(
+        default=None,
+        description="Phase 9: weight_pr / body_weight_kg (2 dp); "
+        "None when no profile or no valid weight PR.",
+    )
+    estimated_1rm_pr_ratio: float | None = Field(
+        default=None,
+        description="Phase 9: estimated_1rm_pr / body_weight_kg (2 dp); "
+        "None when no profile or no valid estimated 1RM PR.",
+    )
 
 
 def calculate_estimated_1rm(weight_kg: float, reps: int) -> float:

@@ -6,7 +6,7 @@ LLM to interpret those calculated results.
 
 ## Current Phase
 
-Phase 8 — Exercise Variety
+Phase 9 — Bodyweight & Experience
 
 ## Technology
 
@@ -41,7 +41,7 @@ FIT-INTEL/
 │   ├── main.py        # /health, /upload, /analysis/* endpoints
 │   ├── requirements.txt
 │   ├── data/          # CSV pipeline: parser, cleaner, normalizer, models
-│   ├── analytics/     # overview, PRs, progression, plateaus, muscles, variety
+│   ├── analytics/     # overview, PRs, progression, plateaus, muscles, variety, profile
 │   ├── tests/         # unittest suite + Hevy CSV fixture
 │   ├── ai/            # (future phases)
 │   └── mappings/      # exercise → primary-muscle mapping table
@@ -167,7 +167,15 @@ python -m unittest discover -s tests -v
   Each entry: `exercise_name`, `weight_pr`, `rep_pr`, `volume_pr`,
   `estimated_1rm_pr` (each with `value`, `unit`, `date`, and — for volume/1RM
   — the `weight`/`reps` of the winning set; `null` when the exercise has no
-  eligible sets).
+  eligible sets). Once a profile with body weight is submitted, each entry
+  additionally carries `weight_pr_ratio` and `estimated_1rm_pr_ratio`
+  (`load / body_weight_kg`, 2 dp; `null` without a profile or valid PR).
+- `POST /profile` → validates and stores the V1 profile in memory
+  (`{ age, body_weight_kg, goal }`; invalid input returns 422, never
+  silently corrected). Responds with the profile plus training-history
+  facts (`start_date`, `end_date`, `duration_days`, `duration_text`,
+  `level`); history is `null` until workouts are uploaded. Accepted goals:
+  `muscle_gain`, `strength`, `fat_loss`, `general_fitness`.
 - `GET /analysis/progression` → chronological per-exercise progression
   histories (`{ exercises: [{ exercise_name, history: [...] }] }`, sorted by
   exercise name; each point has `date`, `workout_start`, `weight_kg`, `reps`,
@@ -199,6 +207,21 @@ python -m unittest discover -s tests -v
   filter. 404 `no_dataset` before the first upload. The frontend shows
   counts, per-muscle variety, a top-exercises bar chart, the frequency
   table, rare/frequent lists, and the event timeline.
+
+## Profile, bodyweight & experience
+
+- Profile fields: `age` (integer, 1–120), `body_weight_kg` (kg, >0, ≤1000,
+  decimals preserved), `goal` (`muscle_gain`, `strength`, `fat_loss`,
+  `general_fitness` — context only, no recommendations). Stored in memory;
+  no database, no auth, no persistence.
+- Training history uses earliest/latest normalized workout calendar dates
+  (never today): `duration_days`, deterministic calendar `duration_text`
+  (e.g. "2 years, 3 months, 19 days"), and the observed-duration level:
+  Beginner (<1 year), Intermediate (1 to <3 years), Advanced (≥3 years).
+  The level describes **observed data duration, not athletic ability**.
+- Load/bodyweight ratios (`load / body_weight_kg`, 2 dp) are derived
+  metadata attached to PR records; original loads are never overwritten,
+  and missing PRs keep null ratios.
 
 ## Exercise variety
 
@@ -257,7 +280,7 @@ python -m unittest discover -s tests -v
 
 ## Notes
 
-- Uploads are processed in memory; no database. Overview, PR, progression,
-  plateau, muscle, and variety metrics are deterministic Python calculations
-  over the normalized model — no LLM, no frontend calculations. AI and
-  recommendations belong to later phases.
+- Uploads and profiles live in memory; no database. Overview, PR,
+  progression, plateau, muscle, variety, and profile metrics are
+  deterministic Python calculations over the normalized model — no LLM, no
+  frontend calculations. AI and recommendations belong to later phases.

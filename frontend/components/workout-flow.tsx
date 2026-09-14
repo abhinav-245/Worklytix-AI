@@ -8,6 +8,9 @@ import {
 } from "@/components/overview-grid";
 import { PrTable, type ExercisePR } from "@/components/pr-table";
 import {
+  ProfileSection,
+} from "@/components/profile-section";
+import {
   MuscleSection,
   type MuscleAnalysis,
 } from "@/components/muscle-section";
@@ -113,6 +116,7 @@ export function WorkoutFlow() {
   const [plateaus, setPlateaus] = useState<ExercisePlateau[] | null>(null);
   const [muscles, setMuscles] = useState<MuscleAnalysis | null>(null);
   const [variety, setVariety] = useState<ExerciseVariety | null>(null);
+  const [profileVersion, setProfileVersion] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -137,7 +141,7 @@ export function WorkoutFlow() {
     return () => {
       active = false;
     };
-  }, [overview]);
+  }, [overview, profileVersion]);
 
   useEffect(() => {
     if (!overview) return;
@@ -242,6 +246,12 @@ export function WorkoutFlow() {
           <VarietySection variety={variety} />
         </section>
       ) : null}
+      <section className="flex w-full flex-col items-center gap-4">
+        <h2 className="text-2xl font-semibold tracking-tight">Profile</h2>
+        <ProfileSection
+          onProfileSaved={() => setProfileVersion((v) => v + 1)}
+        />
+      </section>
     </>
   );
 }
