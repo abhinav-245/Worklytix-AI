@@ -7,6 +7,10 @@ from analytics.exercise_variety import (
     compute_exercise_variety,
     compute_single_exercise_variety,
 )
+from analytics.frequency import (
+    TrainingFrequencyResponse,
+    compute_training_frequency,
+)
 from analytics.muscles import MuscleAnalysisResponse, compute_muscles
 from analytics.overview import TrainingOverview, compute_overview
 from analytics.profile import (
@@ -335,3 +339,9 @@ def analysis_profile() -> APIResponse[ProfileAnalysis]:
     return wrap(
         ProfileAnalysis(profile=_LAST_PROFILE, training_history=history)
     )
+
+
+@app.get("/analysis/frequency", response_model=APIResponse[TrainingFrequencyResponse])
+def analysis_frequency() -> APIResponse[TrainingFrequencyResponse]:
+    """Continuous ISO-week workout counts for the uploaded dataset."""
+    return wrap(compute_training_frequency(_require_dataset()))

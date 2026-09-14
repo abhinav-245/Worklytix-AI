@@ -144,10 +144,28 @@ def compute_exercise_volume(
     )
 
 
+def compute_total_volume(workouts: list[WorkoutRecord]) -> float:
+    """Total weighted volume across all valid sets (2 dp).
+
+    Same set-volume definition as the time series (weight x reps over
+    eligible sets); bodyweight-only sets contribute nothing and are never
+    assigned an arbitrary load.
+    """
+    total = sum(
+        float(s.weight_kg) * int(s.reps)  # type: ignore[arg-type]
+        for w in workouts
+        for e in w.exercises
+        for s in e.sets
+        if is_eligible_set(s.weight_kg, s.reps)
+    )
+    return round(total, 2)
+
+
 __all__ = [
     "VolumePoint",
     "ExerciseVolume",
     "VolumeResponse",
     "compute_volume",
     "compute_exercise_volume",
+    "compute_total_volume",
 ]

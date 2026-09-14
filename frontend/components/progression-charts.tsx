@@ -16,6 +16,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  CHART_GOLD,
+  CHART_GRID,
+  CHART_TICK,
+  CHART_TOOLTIP_STYLE,
+} from "@/lib/chart-theme";
 
 /** Mirrors backend ProgressionPoint (analytics/progression.py). Display only. */
 export interface ProgressionPoint {
@@ -62,20 +68,22 @@ function ProgressionChart({
       <CardContent>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={history} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid stroke={CHART_GRID} strokeDasharray="3 3" />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 11, fill: CHART_TICK }}
               minTickGap={48}
             />
-            <YAxis tick={{ fontSize: 11 }} width={48} />
+            <YAxis tick={{ fontSize: 11, fill: CHART_TICK }} width={48} />
             <Tooltip
+              contentStyle={CHART_TOOLTIP_STYLE}
               labelFormatter={(label) => `Date: ${label}`}
               formatter={(value) => [`${value} ${unit}`, title]}
             />
             <Line
               type="monotone"
               dataKey={dataKey}
+              stroke={CHART_GOLD}
               strokeWidth={2}
               dot={false}
             />

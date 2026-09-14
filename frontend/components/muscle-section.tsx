@@ -11,6 +11,12 @@ import {
 } from "recharts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
+  CHART_GOLD,
+  CHART_GRID,
+  CHART_TICK,
+  CHART_TOOLTIP_STYLE,
+} from "@/lib/chart-theme";
+import {
   Card,
   CardContent,
   CardHeader,
@@ -77,11 +83,11 @@ export function MuscleSection({ analysis }: { analysis: MuscleAnalysis }) {
               data={trained}
               margin={{ top: 4, right: 8, bottom: 0, left: -8 }}
             >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="muscle" tick={{ fontSize: 11 }} interval={0} angle={-35} dy={12} height={64} />
-              <YAxis tick={{ fontSize: 11 }} width={48} />
-              <Tooltip formatter={(value) => [`${value} sets`, "Total sets"]} />
-              <Bar dataKey="total_sets" />
+              <CartesianGrid stroke={CHART_GRID} strokeDasharray="3 3" />
+              <XAxis dataKey="muscle" tick={{ fontSize: 11, fill: CHART_TICK }} interval={0} angle={-35} dy={12} height={64} />
+              <YAxis tick={{ fontSize: 11, fill: CHART_TICK }} width={48} />
+              <Tooltip contentStyle={CHART_TOOLTIP_STYLE} formatter={(value) => [`${value} sets`, "Total sets"]} />
+              <Bar dataKey="total_sets" fill={CHART_GOLD} fillOpacity={0.85} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

@@ -3,27 +3,35 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * FIT-INTEL theme: near-black foundation, gold primary accent.
+ * The app is dark-first: :root carries the dark palette so the product
+ * looks identical with or without the `.dark` class.
+ */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.18 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.76 0.15 84);
+  --primary-foreground: oklch(0.16 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.32 0.04 84);
+  --accent-foreground: oklch(0.95 0.08 84);
+  --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.76 0.15 84);
+  --gold: oklch(0.76 0.15 84);
+  --gold-soft: oklch(0.76 0.15 84 / 35%);
+  --glass: oklch(0.19 0 0 / 72%);
 }
 
 .dark {
@@ -31,21 +39,24 @@
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.18 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.76 0.15 84);
+  --primary-foreground: oklch(0.16 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: oklch(0.32 0.04 84);
+  --accent-foreground: oklch(0.95 0.08 84);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.76 0.15 84);
+  --gold: oklch(0.76 0.15 84);
+  --gold-soft: oklch(0.76 0.15 84 / 35%);
+  --glass: oklch(0.19 0 0 / 72%);
 }
 
 @theme inline {
@@ -68,6 +79,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-gold: var(--gold);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -80,5 +92,73 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(
+        60rem 30rem at 50% -10rem,
+        oklch(0.76 0.15 84 / 7%),
+        transparent 60%
+      ),
+      radial-gradient(
+        40rem 24rem at 85% 110%,
+        oklch(0.76 0.15 84 / 4%),
+        transparent 60%
+      );
+    background-attachment: fixed;
+  }
+  ::selection {
+    background: oklch(0.76 0.15 84 / 35%);
+  }
+}
+
+@layer components {
+  /* Glass surface: translucent dark + blur + subtle border + soft shadow. */
+  .glass {
+    background-color: var(--glass);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid oklch(1 0 0 / 10%);
+    box-shadow: 0 12px 32px oklch(0 0 0 / 45%);
+  }
+
+  /* Restrained hover lift used on interactive glass surfaces. */
+  .glass-hover {
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      transform 150ms ease,
+      background-color 150ms ease;
+  }
+  .glass-hover:hover {
+    border-color: var(--gold-soft);
+    box-shadow:
+      0 12px 32px oklch(0 0 0 / 45%),
+      0 0 0 1px var(--gold-soft),
+      0 0 24px oklch(0.76 0.15 84 / 12%);
+    transform: translateY(-2px);
+  }
+
+  /* Gold metric value. */
+  .metric-gold {
+    color: var(--gold);
+  }
+
+  /* Thin gold top accent for highlight cards. */
+  .gold-accent-top {
+    position: relative;
+  }
+  .gold-accent-top::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 1.25rem;
+    right: 1.25rem;
+    height: 2px;
+    border-radius: 9999px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--gold-soft),
+      transparent
+    );
   }
 }

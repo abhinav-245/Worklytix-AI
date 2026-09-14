@@ -51,6 +51,7 @@ class TestEmptyDataset(unittest.TestCase):
         self.assertEqual(ov.warmup_sets, 0)
         self.assertEqual(ov.dropsets, 0)
         self.assertEqual(ov.failure_sets, 0)
+        self.assertEqual(ov.total_volume_kg, 0.0)
         self.assertIsNone(ov.first_workout_date)
         self.assertIsNone(ov.last_workout_date)
         self.assertIsNone(ov.training_period_days)
@@ -81,6 +82,66 @@ class TestSingleWorkout(unittest.TestCase):
         self.assertEqual(ov.average_workout_duration_minutes, 60.0)
         self.assertIsNone(ov.workouts_per_week)  # zero-day period: no division
         self.assertEqual(ov.training_consistency, 100.0)
+
+
+class TestTotalVolume(unittest.TestCase):
+    def _workout_with_sets(self, title, start, set_specs):
+        return WorkoutRecord(
+            title=title,
+            start_time=start,
+            end_time=None,
+            exercises=[
+                ExerciseRecord(
+                    exercise_name="Bench Press",
+                    sets=[
+                        SetRecord(
+                            set_number=i,
+                            set_type="normal",
+                            weight_kg=w,
+                            reps=r,
+                        )
+                        for i, (w, r) in enumerate(set_specs)
+                    ],
+                )
+            ],
+        )
+
+    def test_sums_valid_set_volumes(self):
+        workouts = [
+            self._workout_with_sets("A", "2026-09-01T07:00:00",
+                                    [(60, 10), (60, 8)]),
+            self._workout_with_sets("B", "2026-09-08T07:00:00",
+                                    [(65, 10), (65, 8)]),
+        ]
+        ov = compute_overview(workouts)
+        # (60x10 + 60x8) + (65x10 + 65x8) = 1080 + 1170.
+        self.assertEqual(ov.total_volume_kg, 2250.0)
+
+    def test_invalid_sets_excluded_never_zero_filled(self):
+        workouts = [
+            self._workout_with_sets("A", "2026-09-01T07:00:00",
+                                    [(None, 10), (0, 8), (60, None),
+                                     (60, 0), (60, 8.5), (60, 8)]),
+        ]
+        ov = compute_overview(workouts)
+        self.assertEqual(ov.total_volume_kg, 480.0)
+
+    def test_matches_progression_volume_sum(self):
+        from analytics.progression import compute_progression
+
+        workouts = [
+            self._workout_with_sets("A", "2026-09-01T07:00:00",
+                                    [(80, 8), (90, 6)]),
+            self._workout_with_sets("B", "2026-09-08T07:00:00",
+                                    [(82.5, 5)]),
+        ]
+        ov = compute_overview(workouts)
+        prog = compute_progression(workouts)
+        expected = round(
+            sum(p.volume_kg for e in prog.exercises for p in e.history), 2
+        )
+        self.assertEqual(ov.total_volume_kg, expected)
+        self.assertEqual(ov.total_volume_kg, 80 * 8 + 90 * 6 + 82.5 * 5)
 
 
 class TestMultipleWorkouts(unittest.TestCase):

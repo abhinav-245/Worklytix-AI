@@ -94,7 +94,7 @@ class TestEnvelopeContract(unittest.TestCase):
                 "total_exercises", "total_sets", "working_sets",
                 "warmup_sets", "dropsets", "failure_sets", "other_sets",
                 "average_workout_duration_minutes", "workouts_per_week",
-                "training_consistency",
+                "training_consistency", "total_volume_kg",
             },
             "/analysis/prs": {"exercises"},
             "/analysis/progression": {"exercises"},
@@ -316,6 +316,15 @@ class TestHevyRegression(unittest.TestCase):
         self.assertEqual(overview["total_workouts"], 538)
         self.assertEqual(overview["total_sets"], 9151)
         self.assertEqual(overview["training_period_days"], 841)
+        # Total weighted volume cross-checked against the raw CSV below.
+        df = pd.read_csv(FIXTURE_PATH)
+        valid = df[df["weight_kg"].notna() & df["reps"].notna()]
+        valid = valid[(valid["weight_kg"] > 0) & (valid["reps"] > 0)]
+        valid = valid[valid["reps"].apply(lambda r: float(r).is_integer())]
+        expected_volume = round(
+            float((valid["weight_kg"] * valid["reps"]).sum()), 2
+        )
+        self.assertEqual(overview["total_volume_kg"], expected_volume)
 
         prs = {
             p["exercise_name"]: p

@@ -10,6 +10,12 @@ import {
   YAxis,
 } from "recharts";
 import {
+  CHART_GOLD,
+  CHART_GRID,
+  CHART_TICK,
+  CHART_TOOLTIP_STYLE,
+} from "@/lib/chart-theme";
+import {
   Card,
   CardContent,
   CardHeader,
@@ -124,18 +130,19 @@ export function VarietySection({ variety }: { variety: ExerciseVariety }) {
               layout="vertical"
               margin={{ top: 4, right: 8, bottom: 0, left: 8 }}
             >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" tick={{ fontSize: 11 }} />
+              <CartesianGrid stroke={CHART_GRID} strokeDasharray="3 3" />
+              <XAxis type="number" tick={{ fontSize: 11, fill: CHART_TICK }} />
               <YAxis
                 type="category"
                 dataKey="exercise_name"
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: 11, fill: CHART_TICK }}
                 width={160}
               />
               <Tooltip
+                contentStyle={CHART_TOOLTIP_STYLE}
                 formatter={(value) => [`${value} workouts`, "Workouts"]}
               />
-              <Bar dataKey="workout_occurrences" />
+              <Bar dataKey="workout_occurrences" fill={CHART_GOLD} fillOpacity={0.85} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

@@ -6,7 +6,7 @@ LLM to interpret those calculated results.
 
 ## Current Phase
 
-Phase 10 — Analytics API
+Phase 11 (revised) — Home / Onboarding, compact Overview, dedicated analytics routes
 
 ## Technology
 
@@ -136,10 +136,39 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:3000>. The placeholder page shows
-“Backend status” and calls `GET /health` using `NEXT_PUBLIC_API_URL`,
-plus an upload card that posts a Hevy CSV to `POST /upload` and shows
-the returned dataset statistics.
+Open <http://localhost:3000>. The landing page explains the product and
+offers unified onboarding: Hevy CSV plus age, body weight and goal in one
+Get Started card with a single Upload & Analyze action. After processing,
+the app navigates to the compact Overview; dedicated routes serve PRs,
+progression, volume, plateaus, muscles, exercises and profile — all
+through the typed client in `frontend/lib/api.ts` from
+`NEXT_PUBLIC_API_URL`.
+
+## Dashboard
+
+The V1 product (gold/black glass theme, dark-first) flows as
+landing → Upload & Analyze → Overview → dedicated routes:
+
+- **Landing (`/`)**: hero, Get Started card (CSV drop zone + age +
+  body weight + goal + Upload & Analyze), concise value props. Upload
+  posts CSV, then profile, then navigates to Overview; errors allow
+  retry without a separate profile step.
+- **Header**: sticky glass bar with FIT-INTEL branding, route nav
+  (Home, Overview, PR, Progression, Volume, Plateau, Insights, More),
+  gold active state, Get Started CTA, dataset status pill and mobile
+  menu.
+- **Overview (`/overview`)**: four cards only — Days Trained, Total
+  Sets, Total Weighted Volume (`total_volume_kg` from the overview API),
+  Experience (observed training-history level).
+- **PR (`/pr`)**, **Progression (`/progression`)**, **Volume (`/volume`)**,
+  **Plateau (`/plateau`)**, **Muscles (`/muscles`)**,
+  **Exercises (`/exercises`)**, **Profile (`/profile`)**: existing
+  section components behind routes with isolated loading/error/empty
+  states and per-section retry.
+- **Insights (`/insights`)**: Coming Soon placeholder; no AI exists yet.
+
+No analytics are calculated in the frontend; charts only visualize
+backend values.
 
 ### 6. Run the backend tests
 
@@ -181,6 +210,8 @@ Endpoints:
   volume_kg}]}]}`); workout-level `Σ weight × reps`, matching Phase 5
   progression volume — distinct from the Phase 4 single-set volume PR.
   Optional `?exercise_name=` filter.
+- `GET /analysis/frequency` → continuous ISO-week workout counts
+  (`{weeks: [{week, week_start, workouts}]}`), including zero-weeks.
 - `GET /analysis/plateaus` (+ optional `?exercise_name=`)
 - `GET /analysis/muscles`
 - `GET /analysis/exercise-variety` (+ optional `?exercise_name=`)

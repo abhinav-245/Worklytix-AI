@@ -16,6 +16,7 @@ export interface TrainingOverview {
   average_workout_duration_minutes: number | null;
   workouts_per_week: number | null;
   training_consistency: number | null;
+  total_volume_kg: number;
 }
 
 function formatCount(value: number): string {

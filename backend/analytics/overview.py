@@ -29,6 +29,9 @@ Definitions:
   workout. Observed weeks run from the Monday of the first workout's week to
   the Sunday of the last workout's week. None when no dated workouts exist.
   No target workouts/week is assumed.
+- total_volume_kg: sum of valid set volumes (weight x reps, 2 dp) across
+  the whole dataset, reusing the Phase 5/10 volume definition from
+  analytics.volume (eligible sets only; bodyweight sets add nothing).
 """
 
 from __future__ import annotations
@@ -37,6 +40,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from analytics.volume import compute_total_volume
 from data.models import WorkoutRecord
 
 
@@ -73,6 +77,10 @@ class TrainingOverview(BaseModel):
     training_consistency: float | None = Field(
         default=None,
         description="Percent of ISO calendar weeks in the span with >= 1 workout.",
+    )
+    total_volume_kg: float = Field(
+        default=0.0,
+        description="Total weighted volume (sum of valid set volumes, 2 dp).",
     )
 
 
@@ -193,4 +201,5 @@ def compute_overview(workouts: list[WorkoutRecord]) -> TrainingOverview:
         average_workout_duration_minutes=_average_duration_minutes(workouts),
         workouts_per_week=workouts_per_week,
         training_consistency=_consistency(starts),
+        total_volume_kg=compute_total_volume(workouts),
     )
