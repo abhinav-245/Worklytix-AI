@@ -377,7 +377,7 @@ class TestPlateauApi(unittest.TestCase):
         self.assertEqual(upload.status_code, 200)
         res = self.client.get("/analysis/plateaus")
         self.assertEqual(res.status_code, 200)
-        body = res.json()
+        body = res.json()["data"]
         self.assertIn("plateaus", body)
         self.assertGreater(len(body["plateaus"]), 0)
         first = body["plateaus"][0]
@@ -403,8 +403,8 @@ class TestPlateauApi(unittest.TestCase):
             params={"exercise_name": "Bench Press (Barbell)"},
         )
         self.assertEqual(res.status_code, 200)
-        self.assertGreater(len(res.json()["plateaus"]), 0)
-        for plateau in res.json()["plateaus"]:
+        self.assertGreater(len(res.json()["data"]["plateaus"]), 0)
+        for plateau in res.json()["data"]["plateaus"]:
             self.assertEqual(
                 plateau["exercise_name"], "Bench Press (Barbell)"
             )
@@ -434,7 +434,7 @@ class TestPlateauApi(unittest.TestCase):
         self.assertEqual(self.client.get("/analysis/prs").status_code, 200)
         progression = self.client.get("/analysis/progression")
         self.assertEqual(progression.status_code, 200)
-        self.assertEqual(len(progression.json()["exercises"]), 117)
+        self.assertEqual(len(progression.json()["data"]["exercises"]), 117)
 
 
 class TestRealHevyPlateaus(unittest.TestCase):

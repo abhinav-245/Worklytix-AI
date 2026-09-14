@@ -6,7 +6,7 @@ LLM to interpret those calculated results.
 
 ## Current Phase
 
-Phase 9 — Bodyweight & Experience
+Phase 10 — Analytics API
 
 ## Technology
 
@@ -34,14 +34,15 @@ FIT-INTEL/
 ├── frontend/        # Next.js + TypeScript + Tailwind + shadcn/ui
 │   ├── app/
 │   ├── components/
-│   ├── lib/
+│   ├── lib/           # typed API client (lib/api.ts) + utils
 │   └── .env.example
 ├── backend/         # FastAPI
 │   ├── .venv/
-│   ├── main.py        # /health, /upload, /analysis/* endpoints
+│   ├── main.py        # /health, /upload, /profile, /analysis/* endpoints
 │   ├── requirements.txt
 │   ├── data/          # CSV pipeline: parser, cleaner, normalizer, models
-│   ├── analytics/     # overview, PRs, progression, plateaus, muscles, variety, profile
+│   ├── analytics/     # overview, PRs, progression, volume, plateaus, muscles, variety, profile
+│   ├── api/           # standardized {success, data, meta} envelope models
 │   ├── tests/         # unittest suite + Hevy CSV fixture
 │   ├── ai/            # (future phases)
 │   └── mappings/      # exercise → primary-muscle mapping table
@@ -151,44 +152,50 @@ python -m unittest discover -s tests -v
 
 ## API
 
-- `GET /health` → `{ "status": "ok" }`
+Every analytics endpoint shares one contract (Phase 10):
+
+```json
+{
+  "success": true,
+  "data": { "...endpoint-specific payload..." },
+  "meta": { "analysis_version": "v1" }
+}
+```
+
+- `data` keeps each endpoint's established domain shape (progression keeps
+  `{exercises: [...]}`; PRs use `{exercises: [...]}`).
+- `meta` carries only the version string — analytics never depend on time.
+- Missing dataset → HTTP 404 `no_dataset`; missing profile →
+  404 `no_profile`; unknown `?exercise_name=` → 404 `unknown_exercise`;
+  invalid request bodies keep FastAPI's standard 422 responses.
+- Interactive docs: `/docs`; machine contract: `/openapi.json`.
+
+Endpoints:
+
+- `POST /upload`, `POST /profile` (unenveloped, unchanged behavior)
+- `GET /analysis/overview`
+- `GET /analysis/prs`
+- `GET /analysis/progression` (+ optional `?exercise_name=`)
+- `GET /analysis/volume` → per-exercise total-volume time series
+  (`{exercises: [{exercise_name, history: [{date, workout_start,
+  volume_kg}]}]}`); workout-level `Σ weight × reps`, matching Phase 5
+  progression volume — distinct from the Phase 4 single-set volume PR.
+  Optional `?exercise_name=` filter.
+- `GET /analysis/plateaus` (+ optional `?exercise_name=`)
+- `GET /analysis/muscles`
+- `GET /analysis/exercise-variety` (+ optional `?exercise_name=`)
+- `GET /analysis/profile` → `{profile, training_history}` (404
+  `no_profile` before submission; `training_history: null` before upload)
+
+The frontend consumes these through the typed client in
+`frontend/lib/api.ts`, which unwraps `data` and returns `null` when no
+result exists. Components receive the same domain shapes as before.
+
 - `POST /upload` (multipart form data, field `file`, `.csv` only) →
   `{ "statistics": {...}, "workouts": [...], "overview": {...} }` with the
-  normalized Workout → Exercise → Set hierarchy, dataset statistics
-  (`total_rows`, `valid_rows`, `invalid_rows`, `total_workouts`,
-  `total_exercises`, `total_sets`, first/last workout dates,
-  `missing_values`, `invalid_values`), and the training-overview facts.
+  normalized Workout → Exercise → Set hierarchy and dataset statistics.
   Invalid files return HTTP 400 with a JSON error; server failures return
   HTTP 500 without tracebacks.
-- `GET /analysis/overview` → training-overview facts for the most recently
-  uploaded dataset (in-memory; HTTP 404 `no_dataset` before the first upload).
-- `GET /analysis/prs` → per-exercise PR facts for the most recently uploaded
-  dataset (in-memory; HTTP 404 `no_dataset` before the first upload).
-  Each entry: `exercise_name`, `weight_pr`, `rep_pr`, `volume_pr`,
-  `estimated_1rm_pr` (each with `value`, `unit`, `date`, and — for volume/1RM
-  — the `weight`/`reps` of the winning set; `null` when the exercise has no
-  eligible sets). Once a profile with body weight is submitted, each entry
-  additionally carries `weight_pr_ratio` and `estimated_1rm_pr_ratio`
-  (`load / body_weight_kg`, 2 dp; `null` without a profile or valid PR).
-- `POST /profile` → validates and stores the V1 profile in memory
-  (`{ age, body_weight_kg, goal }`; invalid input returns 422, never
-  silently corrected). Responds with the profile plus training-history
-  facts (`start_date`, `end_date`, `duration_days`, `duration_text`,
-  `level`); history is `null` until workouts are uploaded. Accepted goals:
-  `muscle_gain`, `strength`, `fat_loss`, `general_fitness`.
-- `GET /analysis/progression` → chronological per-exercise progression
-  histories (`{ exercises: [{ exercise_name, history: [...] }] }`, sorted by
-  exercise name; each point has `date`, `workout_start`, `weight_kg`, `reps`,
-  `volume_kg`, `estimated_1rm_kg`). Optional `?exercise_name=...` filter
-  (exact match; 404 `unknown_exercise` when absent). 404 `no_dataset` before
-  the first upload. The frontend renders weight/rep/volume/estimated-1RM
-  line charts per selected exercise.
-- `GET /analysis/plateaus` → possible-plateau periods
-  (`{ plateaus: [...] }`, sorted by exercise name then start; each with
-  `label: "Possible Plateau"`, `plateau_start/end`, `duration_days`,
-  `consecutive_weeks`, `heaviest_weight_kg`, `reps_at_heaviest_weight`,
-  and per-week `evidence`). Optional `?exercise_name=...` filter.
-  404 `no_dataset` before the first upload.
 - `GET /analysis/muscles` → muscle aggregation
   (`{ muscles: [...], mapping: {...}, unmapped_exercises: [...] }`): per
   canonical muscle `total_sets`, `training_sessions`, `exercise_variety`,
@@ -281,6 +288,8 @@ python -m unittest discover -s tests -v
 ## Notes
 
 - Uploads and profiles live in memory; no database. Overview, PR,
-  progression, plateau, muscle, variety, and profile metrics are
+  progression, volume, plateau, muscle, variety, and profile metrics are
   deterministic Python calculations over the normalized model — no LLM, no
-  frontend calculations. AI and recommendations belong to later phases.
+  frontend calculations. The analytics API wraps them in a versioned
+  `{success, data, meta}` envelope for the dashboard and future AI layer.
+  AI and recommendations belong to later phases.

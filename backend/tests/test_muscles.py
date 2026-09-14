@@ -259,7 +259,7 @@ class TestMuscleApi(unittest.TestCase):
         self.assertEqual(upload.status_code, 200)
         res = self.client.get("/analysis/muscles")
         self.assertEqual(res.status_code, 200)
-        body = res.json()
+        body = res.json()["data"]
         self.assertEqual(
             set(body),
             {"muscles", "mapping", "unmapped_exercises"},

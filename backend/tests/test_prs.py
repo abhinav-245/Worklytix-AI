@@ -295,10 +295,10 @@ class TestPrApi(unittest.TestCase):
         self.assertEqual(upload.status_code, 200)
         res = self.client.get("/analysis/prs")
         self.assertEqual(res.status_code, 200)
-        body = res.json()
-        self.assertIsInstance(body, list)
-        self.assertEqual(len(body), 117)
-        names = [p["exercise_name"] for p in body]
+        body = res.json()["data"]
+        self.assertIsInstance(body["exercises"], list)
+        self.assertEqual(len(body["exercises"]), 117)
+        names = [p["exercise_name"] for p in body["exercises"]]
         self.assertEqual(names, sorted(names))
         self.assertIn("Bench Press (Barbell)", names)
 

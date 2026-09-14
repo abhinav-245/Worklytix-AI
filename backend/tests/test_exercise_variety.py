@@ -361,7 +361,7 @@ class TestVarietyApi(unittest.TestCase):
         self.assertEqual(upload.status_code, 200)
         res = self.client.get("/analysis/exercise-variety")
         self.assertEqual(res.status_code, 200)
-        body = res.json()
+        body = res.json()["data"]
         self.assertEqual(
             set(body),
             {"total_workouts", "distinct_exercises", "exercises",
@@ -386,7 +386,7 @@ class TestVarietyApi(unittest.TestCase):
             params={"exercise_name": "Bench Press (Barbell)"},
         )
         self.assertEqual(res.status_code, 200)
-        body = res.json()
+        body = res.json()["data"]
         self.assertEqual(body["distinct_exercises"], 1)
         self.assertEqual(len(body["frequencies"]), 1)
         self.assertEqual(

@@ -26,6 +26,12 @@ from analytics.progression import (
     compute_exercise_progression,
     compute_progression,
 )
+from analytics.volume import (
+    VolumeResponse,
+    compute_exercise_volume,
+    compute_volume,
+)
+from api.models import APIResponse, PRListData, wrap
 from data.models import UploadResponse, WorkoutRecord
 from data.parser import CSVPipelineError, MissingColumnsError
 from data.pipeline import process_csv_bytes
@@ -118,7 +124,7 @@ async def upload(file: UploadFile = File(...)):
     )
 
 
-@app.get("/analysis/overview", response_model=TrainingOverview)
+@app.get("/analysis/overview", response_model=APIResponse[TrainingOverview])
 def analysis_overview():
     """Overview facts for the most recently uploaded dataset (in-memory)."""
     if _LAST_WORKOUTS is None:
@@ -130,10 +136,10 @@ def analysis_overview():
                 "POST a CSV to /upload first.",
             },
         )
-    return compute_overview(_LAST_WORKOUTS)
+    return wrap(compute_overview(_LAST_WORKOUTS))
 
 
-@app.get("/analysis/prs", response_model=list[ExercisePR])
+@app.get("/analysis/prs", response_model=APIResponse[PRListData])
 def analysis_prs():
     """Per-exercise PR facts for the most recently uploaded dataset.
 
@@ -152,7 +158,7 @@ def analysis_prs():
     prs = generate_exercise_prs(_LAST_WORKOUTS)
     if _LAST_PROFILE is not None:
         prs = attach_bodyweight_ratios(prs, _LAST_PROFILE.body_weight_kg)
-    return prs
+    return wrap(PRListData(exercises=prs))
 
 
 @app.post("/profile", response_model=ProfileAnalysis, status_code=200)
@@ -186,10 +192,10 @@ def _require_dataset() -> list[WorkoutRecord]:
     return _LAST_WORKOUTS
 
 
-@app.get("/analysis/progression", response_model=ProgressionResponse)
+@app.get("/analysis/progression", response_model=APIResponse[ProgressionResponse])
 def analysis_progression(
     exercise_name: str | None = None,
-) -> ProgressionResponse:
+) -> APIResponse[ProgressionResponse]:
     """Chronological per-exercise progression for the uploaded dataset.
 
     Optionally filter to one normalized exercise with
@@ -207,14 +213,41 @@ def analysis_progression(
                     "in the uploaded dataset.",
                 },
             )
-        return ProgressionResponse(exercises=[single])
-    return compute_progression(workouts)
+        return wrap(ProgressionResponse(exercises=[single]))
+    return wrap(compute_progression(workouts))
 
 
-@app.get("/analysis/plateaus", response_model=PlateauResponse)
+@app.get("/analysis/volume", response_model=APIResponse[VolumeResponse])
+def analysis_volume(
+    exercise_name: str | None = None,
+) -> APIResponse[VolumeResponse]:
+    """Per-exercise total-volume time series for the uploaded dataset.
+
+    Volume here is the workout-level sum of valid set volumes
+    (weight x reps), matching Phase 5 progression volume -- distinct from
+    the Phase 4 single-set volume PR. Optionally filter with
+    ``?exercise_name=...`` (exact match; 404 when unknown).
+    """
+    workouts = _require_dataset()
+    if exercise_name is not None:
+        single = compute_exercise_volume(workouts, exercise_name)
+        if single is None:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error": "unknown_exercise",
+                    "message": f"No exercise named {exercise_name!r} "
+                    "in the uploaded dataset.",
+                },
+            )
+        return wrap(VolumeResponse(exercises=[single]))
+    return wrap(compute_volume(workouts))
+
+
+@app.get("/analysis/plateaus", response_model=APIResponse[PlateauResponse])
 def analysis_plateaus(
     exercise_name: str | None = None,
-) -> PlateauResponse:
+) -> APIResponse[PlateauResponse]:
     """Possible-plateau periods for the uploaded dataset.
 
     Optionally filter to one normalized exercise with
@@ -236,22 +269,27 @@ def analysis_plateaus(
                     "in the uploaded dataset.",
                 },
             )
-        return PlateauResponse(
-            plateaus=compute_exercise_plateaus(workouts, exercise_name)
+        return wrap(
+            PlateauResponse(
+                plateaus=compute_exercise_plateaus(workouts, exercise_name)
+            )
         )
-    return compute_plateaus(workouts)
+    return wrap(compute_plateaus(workouts))
 
 
-@app.get("/analysis/muscles", response_model=MuscleAnalysisResponse)
-def analysis_muscles() -> MuscleAnalysisResponse:
+@app.get("/analysis/muscles", response_model=APIResponse[MuscleAnalysisResponse])
+def analysis_muscles() -> APIResponse[MuscleAnalysisResponse]:
     """Muscle-level aggregation for the uploaded dataset via the mapping table."""
-    return compute_muscles(_require_dataset())
+    return wrap(compute_muscles(_require_dataset()))
 
 
-@app.get("/analysis/exercise-variety", response_model=ExerciseVarietyAnalysis)
+@app.get(
+    "/analysis/exercise-variety",
+    response_model=APIResponse[ExerciseVarietyAnalysis],
+)
 def analysis_exercise_variety(
     exercise_name: str | None = None,
-) -> ExerciseVarietyAnalysis:
+) -> APIResponse[ExerciseVarietyAnalysis]:
     """Exercise-selection facts for the uploaded dataset.
 
     Optionally filter to one normalized exercise with
@@ -269,5 +307,31 @@ def analysis_exercise_variety(
                     "in the uploaded dataset.",
                 },
             )
-        return single
-    return compute_exercise_variety(workouts)
+        return wrap(single)
+    return wrap(compute_exercise_variety(workouts))
+
+
+@app.get("/analysis/profile", response_model=APIResponse[ProfileAnalysis])
+def analysis_profile() -> APIResponse[ProfileAnalysis]:
+    """Stored profile plus training-history facts (profile prerequisite).
+
+    404 with ``no_profile`` before a profile is submitted. Training history
+    is null until workouts are uploaded.
+    """
+    if _LAST_PROFILE is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "no_profile",
+                "message": "No profile has been submitted yet. "
+                "POST a profile to /profile first.",
+            },
+        )
+    history = (
+        compute_training_history(_LAST_WORKOUTS)
+        if _LAST_WORKOUTS is not None
+        else None
+    )
+    return wrap(
+        ProfileAnalysis(profile=_LAST_PROFILE, training_history=history)
+    )

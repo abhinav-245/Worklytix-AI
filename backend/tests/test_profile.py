@@ -338,7 +338,7 @@ class TestProfileApi(unittest.TestCase):
         self.client.post(
             "/upload", files={"file": ("workouts.csv", raw, "text/csv")}
         )
-        before = self.client.get("/analysis/prs").json()
+        before = self.client.get("/analysis/prs").json()["data"]["exercises"]
         bench_before = next(
             p for p in before if p["exercise_name"] == "Bench Press (Barbell)"
         )
@@ -348,7 +348,7 @@ class TestProfileApi(unittest.TestCase):
         self.client.post("/profile", json={
             "age": 25, "body_weight_kg": 63.0, "goal": "muscle_gain",
         })
-        after = self.client.get("/analysis/prs").json()
+        after = self.client.get("/analysis/prs").json()["data"]["exercises"]
         bench_after = next(
             p for p in after if p["exercise_name"] == "Bench Press (Barbell)"
         )

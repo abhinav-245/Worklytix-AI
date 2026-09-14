@@ -27,81 +27,14 @@ import {
   type ExerciseProgression,
 } from "@/components/progression-charts";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-
-async function fetchOverview(): Promise<TrainingOverview | null> {
-  try {
-    const res = await fetch(`${API_URL}/analysis/overview`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as TrainingOverview;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchPrs(): Promise<ExercisePR[] | null> {
-  try {
-    const res = await fetch(`${API_URL}/analysis/prs`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as ExercisePR[];
-  } catch {
-    return null;
-  }
-}
-
-async function fetchProgression(): Promise<ExerciseProgression[] | null> {
-  try {
-    const res = await fetch(`${API_URL}/analysis/progression`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    const body = (await res.json()) as { exercises: ExerciseProgression[] };
-    return body.exercises;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchPlateaus(): Promise<ExercisePlateau[] | null> {
-  try {
-    const res = await fetch(`${API_URL}/analysis/plateaus`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    const body = (await res.json()) as { plateaus: ExercisePlateau[] };
-    return body.plateaus;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchMuscles(): Promise<MuscleAnalysis | null> {
-  try {
-    const res = await fetch(`${API_URL}/analysis/muscles`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as MuscleAnalysis;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchVariety(): Promise<ExerciseVariety | null> {
-  try {
-    const res = await fetch(`${API_URL}/analysis/exercise-variety`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as ExerciseVariety;
-  } catch {
-    return null;
-  }
-}
+import {
+  getExerciseVariety,
+  getMuscles,
+  getOverview,
+  getPlateaus,
+  getPRs,
+  getProgression,
+} from "@/lib/api";
 
 /**
  * Upload → analysis flow. All numbers are calculated by the backend;
@@ -121,7 +54,7 @@ export function WorkoutFlow() {
 
   useEffect(() => {
     let active = true;
-    fetchOverview().then((data) => {
+    getOverview().then((data) => {
       if (!active) return;
       setOverview(data);
       setLoaded(true);
@@ -134,7 +67,7 @@ export function WorkoutFlow() {
   useEffect(() => {
     if (!overview) return;
     let active = true;
-    fetchPrs().then((data) => {
+    getPRs().then((data) => {
       if (!active) return;
       setPrs(data);
     });
@@ -146,7 +79,7 @@ export function WorkoutFlow() {
   useEffect(() => {
     if (!overview) return;
     let active = true;
-    fetchProgression().then((data) => {
+    getProgression().then((data) => {
       if (!active) return;
       setProgression(data);
     });
@@ -158,7 +91,7 @@ export function WorkoutFlow() {
   useEffect(() => {
     if (!overview) return;
     let active = true;
-    fetchPlateaus().then((data) => {
+    getPlateaus().then((data) => {
       if (!active) return;
       setPlateaus(data);
     });
@@ -170,7 +103,7 @@ export function WorkoutFlow() {
   useEffect(() => {
     if (!overview) return;
     let active = true;
-    fetchMuscles().then((data) => {
+    getMuscles().then((data) => {
       if (!active) return;
       setMuscles(data);
     });
@@ -182,7 +115,7 @@ export function WorkoutFlow() {
   useEffect(() => {
     if (!overview) return;
     let active = true;
-    fetchVariety().then((data) => {
+    getExerciseVariety().then((data) => {
       if (!active) return;
       setVariety(data);
     });

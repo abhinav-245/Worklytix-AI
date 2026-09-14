@@ -244,7 +244,7 @@ class TestOverviewApi(unittest.TestCase):
 
         res = self.client.get("/analysis/overview")
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json(), upload.json()["overview"])
+        self.assertEqual(res.json()["data"], upload.json()["overview"])
 
 
 class TestRealHevyOverview(unittest.TestCase):

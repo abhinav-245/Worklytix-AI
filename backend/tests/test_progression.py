@@ -283,7 +283,7 @@ class TestProgressionApi(unittest.TestCase):
 
         res = self.client.get("/analysis/progression")
         self.assertEqual(res.status_code, 200)
-        body = res.json()
+        body = res.json()["data"]
         self.assertIn("exercises", body)
         names = [e["exercise_name"] for e in body["exercises"]]
         self.assertEqual(names, sorted(names))
@@ -311,9 +311,9 @@ class TestProgressionApi(unittest.TestCase):
             params={"exercise_name": "Squat (Barbell)"},
         )
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(len(res.json()["exercises"]), 1)
+        self.assertEqual(len(res.json()["data"]["exercises"]), 1)
         self.assertEqual(
-            res.json()["exercises"][0]["exercise_name"], "Squat (Barbell)"
+            res.json()["data"]["exercises"][0]["exercise_name"], "Squat (Barbell)"
         )
 
     def test_unknown_exercise_filter_is_404(self):
@@ -340,7 +340,7 @@ class TestProgressionApi(unittest.TestCase):
         )
         prs = self.client.get("/analysis/prs")
         self.assertEqual(prs.status_code, 200)
-        self.assertEqual(len(prs.json()), 117)
+        self.assertEqual(len(prs.json()["data"]["exercises"]), 117)
 
 
 class TestRealHevyProgression(unittest.TestCase):
